@@ -10,3 +10,4 @@
 - [Check for object and create it if it does not exist](https://gemini.google.com/share/7ef3a3c85591)
 - [plot random contours](https://gemini.google.com/share/ac1b384d3367)
 - [shape matching with Hu invariants an DBSCAN](https://gemini.google.com/share/0c1ff1f9b9f3)
+- [building a classier using DBSCAN where only one of several classes is labelled](https://gemini.google.com/share/8cc3494eb7c2)
