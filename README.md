@@ -9,4 +9,4 @@
 - [EFD defect detection](https://share.google/aimode/s0U9B17vVAgGjX3SL)
 - [Check for object and create it if it does not exist](https://gemini.google.com/share/7ef3a3c85591)
 - [plot random contours](https://gemini.google.com/share/ac1b384d3367)
--[shape matching with Hu invariants an DBSCAN](https://gemini.google.com/share/0c1ff1f9b9f3)
+- [shape matching with Hu invariants an DBSCAN](https://gemini.google.com/share/0c1ff1f9b9f3)
