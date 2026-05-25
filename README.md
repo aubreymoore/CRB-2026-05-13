@@ -1,0 +1,12 @@
+# README.md
+
+## Technical notes
+
+### Gemini references
+
+- [Please write python code for a binary classifier for shapes "of interest" and "not of interest". I have already created a training set of contours for each shape class. I want my classifier to be based on cv2.matchShapes](https://gemini.google.com/share/1f8d2d3aa787)
+- [Use python cv2 to get high precision contours from a binary mask](https://share.google/aimode/JFWQPUJs6pchjI70H)
+- [EFD defect detection](https://share.google/aimode/s0U9B17vVAgGjX3SL)
+- [Check for object and create it if it does not exist](https://gemini.google.com/share/7ef3a3c85591)
+- [plot random contours](https://gemini.google.com/share/ac1b384d3367)
+-[shape matching with Hu invariants an DBSCAN](https://gemini.google.com/share/0c1ff1f9b9f3)
