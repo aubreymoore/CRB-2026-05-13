@@ -87,6 +87,7 @@ def efd_find_cuts(original_contour, original_mask, order=40, ksize=(3,3), iterat
     
     n_vcuts_detected = len(vcut_contours)
     
+    # THIS IS NOT AN ACCURATE WAY TO GET CENTROIDS - SHOULD PROBABLY USE MOMENTS OR SOMETHING SIMILAR
     if n_vcuts_detected > 0:
         data = []
         for vcut_contour in vcut_contours:
