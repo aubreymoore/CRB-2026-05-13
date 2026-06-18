@@ -50,6 +50,7 @@ default_schema_sql = '''
 
     CREATE TABLE IF NOT EXISTS damage (
         damage_id INTEGER PRIMARY KEY, 
+        image_id INTEGER,
         detection_id INTEGER, 
         FOREIGN KEY (detection_id) REFERENCES detections(detection_id) ON DELETE CASCADE
     );
