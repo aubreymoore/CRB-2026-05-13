@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS trees (
 
 SELECT AddGeometryColumn(
     'trees',             -- Table name
-    'poly',              -- Column name
+    'tree_poly',              -- Column name
     0,                   -- SRID (-1 or 0 signifies flat pixel/Cartesian space)
     'POLYGON',           -- Geometry type
     'XY'                 -- 2D coordinates
@@ -49,7 +49,7 @@ SELECT AddGeometryColumn(
 
 SELECT CreateSpatialIndex(
     'trees', 
-    'poly'
+    'tree_poly'
 );
 
 -- damage table
@@ -57,13 +57,13 @@ SELECT CreateSpatialIndex(
 CREATE TABLE IF NOT EXISTS damage (
     damage_id INTEGER PRIMARY KEY, 
     image_id INTEGER,
-    detection_id INTEGER, 
-    FOREIGN KEY (detection_id) REFERENCES detections(detection_id) ON DELETE CASCADE
+    tree_id INTEGER, 
+    FOREIGN KEY (tree_id) REFERENCES trees(tree_id) ON DELETE CASCADE
 );
 
     SELECT AddGeometryColumn(
     'damage',            -- Table name
-    'poly',              -- Column name
+    'damage_poly',              -- Column name
     0,                   -- SRID (-1 or 0 signifies flat pixel/Cartesian space)
     'POLYGON',           -- Geometry type
     'XY'                 -- 2D coordinates
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS damage (
 
 SELECT CreateSpatialIndex(
     'damage', 
-    'poly'
+    'damage_poly'
 );
 '''
 
@@ -81,14 +81,12 @@ postprocessing_sql = '''
 -- flip ys in tree contours so they overlay images
 
 UPDATE trees 
-SET poly = ATM_Transform(poly, ATM_CreateScale(1, -1));
-COMMIT;
+SET tree_poly = ATM_Transform(tree_poly, ATM_CreateScale(1, -1));
 
 -- flip ys in damage contours so they overlay images
 
 UPDATE damage 
-SET poly = ATM_Transform(poly, ATM_CreateScale(1, -1));
-COMMIT;
+SET damage_poly = ATM_Transform(damage_poly, ATM_CreateScale(1, -1));
 
 /**********************************************************************************
 Calculates proximity of each tree polygon to the left, right an top edge the image.
@@ -106,9 +104,9 @@ CREATE TEMP TABLE temp_touches AS
 SELECT 
   trees.image_id, 
   tree_id,
-  MbrMinX(poly)/image_width AS left_proximity,
-  1 - MbrMaxX(poly)/image_width AS right_proximity,
-  - MbrMaxY(poly)/image_height AS top_proximity
+  MbrMinX(tree_poly)/image_width AS left_proximity,
+  1 - MbrMaxX(tree_poly)/image_width AS right_proximity,
+  - MbrMaxY(tree_poly)/image_height AS top_proximity
 FROM trees, images
 WHERE trees.image_id=images.image_id;
 
@@ -116,6 +114,4 @@ UPDATE trees
 SET tree_touches_edge = left_proximity<0.01 OR right_proximity<0.01 OR top_proximity<0.01
 FROM temp_touches
 WHERE trees.tree_id = temp_touches.tree_id;
-COMMIT;
-
 '''
