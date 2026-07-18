@@ -1,5 +1,15 @@
 # README.md
 
+## realworld2.ipynb
+- Current workflow?
+
+## unsupervised_contour_clustering_HDBSCAN.ipynb
+- classifies trees using Hu moments
+
+## reassign_noise_points.py
+- needs to be integrated with unsupervised_contour_clustering_HDBSCAN.ipynb?
+- seems to be unnecessary
+
 ## Technical notes
 
 ### Gemini references
