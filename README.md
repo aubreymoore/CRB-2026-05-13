@@ -12,6 +12,7 @@
 - [shape matching with Hu invariants an DBSCAN](https://gemini.google.com/share/0c1ff1f9b9f3)
 - [building a classier using DBSCAN where only one of several classes is labelled](https://gemini.google.com/share/8cc3494eb7c2)
 - [LabelSpreading with only one labelled class](https://share.google/aimode/EbRDOCV4Xy6H62pdL)
+- [Handling WKT polygons stored in SpatiaLite](https://share.gemini.google/GsXlsrXlZSvi)
 
 ### YouYube references
 
