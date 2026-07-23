@@ -1,4 +1,4 @@
-dbpath = 'test.db'
+dbpath = '/home/aubrey/Desktop/Efate2025/Efate2025B.db'
 order = 14
 minpixels = 50
 

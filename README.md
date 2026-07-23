@@ -10,6 +10,10 @@
 - needs to be integrated with unsupervised_contour_clustering_HDBSCAN.ipynb?
 - seems to be unnecessary
 
+## view_tree_shape_classes.ipynb
+- creates a directory tree containing images of filled tree shape contours
+- probably best to turn this into a function
+
 ## Technical notes
 
 ### Gemini references
