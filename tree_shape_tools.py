@@ -107,7 +107,7 @@ def create_v_trees_view(db_path):
 def backup_database(db_path, db_backup_dir='db_backups'):
     os.makedirs(db_backup_dir, exist_ok=True)
     db_basename = os.path.basename(db_path)
-    t = time.localtime()git
+    t = time.localtime()
     timestamp = time.strftime('%Y-%m-%d-%H%M', t)
     backup_name = db_basename.replace('.', f'-{timestamp}.')
     shutil.copy2(db_path, f'{db_backup_dir}/{backup_name}')
