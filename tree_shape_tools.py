@@ -67,7 +67,6 @@ def cause_runtime_error():
 
 ##########################################################################################
 ##########################################################################################
-
 def create_v_trees_view(db_path):
     """ 
     Creates a view named 'v_trees' in the current db.
@@ -101,6 +100,37 @@ def create_v_trees_view(db_path):
     
 # db_path = '/home/aubrey/Desktop/Efate2025/Efate2025B.db'
 # create_v_trees_view(db_path)
+       
+##########################################################################################
+
+def create_v_damage_view(db_path):
+    """ 
+    Creates a view named 'v_view' in the current db.
+    This view shows the number of damage records associated with each tree in the v_trees view.
+    The v_trees view must exist before executing this function.
+    """
+    # connect to db and enable spatial extensions
+    conn = sqlite3.connect(db_path)
+    conn.enable_load_extension(True)
+    conn.load_extension('mod_spatialite')
+
+    sql = ''' 
+    CREATE VIEW v_damage AS
+    SELECT 
+        t.tree_id,  
+        t.tree_class,	
+        COUNT(d.damage_id) AS damage_count
+    FROM v_trees t
+    LEFT JOIN damage d ON t.tree_id = d.tree_id
+    GROUP BY t.tree_id;
+    '''
+    with conn:
+        conn.execute('DROP VIEW IF EXISTS v_damage;')
+        conn.execute(sql)
+    conn.close()
+    
+# db_path = '/home/aubrey/Desktop/Efate2025/Efate2025B.db'
+# create_v_damage_view(db_path)
        
 ##########################################################################################
 
