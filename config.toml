@@ -1,10 +1,26 @@
-dbpath = '/home/aubrey/Desktop/Efate2025/Efate2025B.db'
+# config.toml
+
+[database]
+db_path = '/home/aubrey/Desktop/Efate2025/Efate2025B.db'
+db_backup_dir = 'db_backups'
+
+[trees]
+model_path = 'hdbscan_pipeline_1.joblib'
+gallery_dir = 'tree_cluster_gallery_1'
+images_per_cluster = 35
+min_prob = 0.2
+csv_path = 'cluster2class.csv'
+
+[damage]
 order = 14
 minpixels = 50
 
+############################
+# SQL
+############################
 
+[schema sql]
 default_schema_sql = '''
-
 -- images table
 
 CREATE TABLE IF NOT EXISTS images (
@@ -75,9 +91,8 @@ SELECT CreateSpatialIndex(
 );
 '''
 
-
+[postprocessing sql]
 postprocessing_sql = '''
-
 -- flip ys in tree contours so they overlay images
 
 UPDATE trees 

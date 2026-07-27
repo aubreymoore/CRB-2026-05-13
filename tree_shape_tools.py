@@ -16,6 +16,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import time
+import fire
 
 ##############################################################################################
 # The first 3 functions are here to help me learn xdoctest and should be removed at some point
@@ -452,3 +453,13 @@ def check_trees_table(db_path):
     with conn:
         conn.execute('UPDATE trees SET pixel_count = ST_Area(tree_poly)')
     conn.close()
+    
+    
+if __name__ == '__main__':
+    fire.Fire({
+        'backup_database': backup_database,   
+        'check_trees': check_trees_table, 
+        'train_model': train_model, 
+        'classify_tree_shapes': classify_tree_shapes,
+        'create_tree_cluster_gallery': create_tree_cluster_gallery
+    })
