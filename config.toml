@@ -19,7 +19,7 @@ minpixels = 50
 # SQL
 ############################
 
-[schema sql]
+[schema_sql]
 default_schema_sql = '''
 -- images table
 
@@ -91,7 +91,7 @@ SELECT CreateSpatialIndex(
 );
 '''
 
-[postprocessing sql]
+[postprocessing_sql]
 postprocessing_sql = '''
 -- flip ys in tree contours so they overlay images
 
