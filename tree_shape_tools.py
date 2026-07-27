@@ -70,6 +70,25 @@ def cause_runtime_error():
 ##########################################################################################
 
 
+def run_train_model_pipeline(db_path, db_backup_dir, model_path, images_per_cluster, gallery_dir, min_prob):
+    """  
+    Trains an HDBSCAN model to assign tree shapes to clusters.
+    """
+    backup_database(db_path, db_backup_dir)  
+    check_trees_table(db_path) 
+    train_model(db_path, model_path)    
+    classify_tree_shapes(db_path, model_path)
+    create_tree_cluster_gallery(db_path, images_per_cluster, gallery_dir, min_prob)
+
+
+def run_tree_shape_classifier_pipeline(db_path, csv_path):
+    """  
+    Converts cluster index to tree_shape index.
+    """ 
+    create_cluster2class_table(db_path, csv_path)
+    create_db_views(db_path)
+  
+      
 def create_db_views(dbpath: str):
     """ 
     Creates views named v_trees and v_damage the current db.
