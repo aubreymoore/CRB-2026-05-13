@@ -17,10 +17,15 @@ from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import time
 import fire
+import tomllib
+import sys
+import xdoctest
+import fire
 
 ##############################################################################################
 # The first 3 functions are here to help me learn xdoctest and should be removed at some point
 ###############################################################################################
+
 
 def parse_int(value):
     """
@@ -164,7 +169,7 @@ def create_cluster2class_table(db_path: str, csv_path :str='cluster2class.csv') 
 
 def create_tree_cluster_gallery(db_path:str, images_per_cluster:int, gallery_dir:str, min_prob:float=0.2):
     """
-    Creates a gallery of images for each HDBSCAN cluster (soft_tree_class). 
+    Creates a gallery of images for each HDBSCAN cluster (soft_tree_class).    
     Images are saved in folders named "tree_cluster_gallery/cluster_nn" where n is "soft_tree_class"
     A limit of images_per_cluster images with the largest soft_tree_prob greater than 0.2 are saved
     
@@ -473,12 +478,26 @@ def check_trees_table(db_path):
         conn.execute('UPDATE trees SET pixel_count = ST_Area(tree_poly)')
     conn.close()
     
+    ############################################
     
+def main(): 
+    # If '--test' is passed in the terminal arguments, run doctest instead of CLI
+    if "--test" in sys.argv:
+        sys.argv.remove("--test")  # Clean up arguments for doctest
+        xdoctest.doctest_module(__file__)
+        print("xdoctest completed.")
+    else:
+        os.environ["PAGER"] = "cat" # disables output in full page format
+        fire.Fire({
+            'backup_database': backup_database,   
+            'check_trees': check_trees_table, 
+            'train_model': train_model, 
+            'classify_tree_shapes': classify_tree_shapes,
+            'create_tree_cluster_gallery': create_tree_cluster_gallery,
+            'dict_from_toml': dict_from_toml
+        })
+
+    ################################################
+        
 if __name__ == '__main__':
-    fire.Fire({
-        'backup_database': backup_database,   
-        'check_trees': check_trees_table, 
-        'train_model': train_model, 
-        'classify_tree_shapes': classify_tree_shapes,
-        'create_tree_cluster_gallery': create_tree_cluster_gallery
-    })
+    main()

@@ -61,7 +61,6 @@ def ic_red():
 
 #########################################################################
 
-
 def run_task(task: str):
     """  
     Task can be TRAIN MODEL or 'CLASSIFY TREE SHAPES'
@@ -72,8 +71,9 @@ def run_task(task: str):
     ic('starting')
 
     ic('getting parameters from config.toml')
-    with open("config.toml", "rb") as f:
-        config = tomllib.load(f)  
+    # with open("config.toml", "rb") as f:
+    #     config = tomllib.load(f)  
+    config = dict_from_toml('config.toml')
     ic(config['database'])
     ic(config['trees'])  
 
@@ -104,5 +104,4 @@ def run_task(task: str):
 # # MAIN
 
 if __name__ == '__main__':
-  fire.Fire(run_task)
-
+  fire.Fire()
