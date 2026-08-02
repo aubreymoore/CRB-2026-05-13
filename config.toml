@@ -1,7 +1,7 @@
 # config.toml
 
 [database]
-delete_db = true           # If True, database named db_path will be deleted at start of processing.
+delete_db = false          # If true, database named db_path will be deleted at start of processing.
 db_path = 'test.db'          # Name of current database, name of database to be created at start of processing
 db_backup_dir = 'db_backups' # backup directory for databases
 

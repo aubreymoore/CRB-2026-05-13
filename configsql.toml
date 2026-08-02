@@ -1,9 +1,6 @@
-
 ############################
-# SQL
+# configsql.toml
 ############################
-
-[schema_sql]
 default_schema_sql = '''
 -- images table
 
@@ -23,10 +20,7 @@ SELECT AddGeometryColumn(
     'XY'                 -- 2D coordinates
 );
 
-SELECT CreateSpatialIndex(
-    'trees', 
-    'poly'
-);
+SELECT CreateSpatialIndex('images', 'location');
 
 -- trees table
 
@@ -47,10 +41,7 @@ SELECT AddGeometryColumn(
     'XY'                 -- 2D coordinates
 );
 
-SELECT CreateSpatialIndex(
-    'trees', 
-    'tree_poly'
-);
+SELECT CreateSpatialIndex('trees', 'tree_poly');
 
 -- damage table
 
@@ -69,13 +60,11 @@ CREATE TABLE IF NOT EXISTS damage (
     'XY'                 -- 2D coordinates
 );
 
-SELECT CreateSpatialIndex(
-    'damage', 
-    'damage_poly'
-);
+SELECT CreateSpatialIndex('damage', 'damage_poly');
 '''
 
-[postprocessing_sql]
+#############################
+
 postprocessing_sql = '''
 -- flip ys in tree contours so they overlay images
 
