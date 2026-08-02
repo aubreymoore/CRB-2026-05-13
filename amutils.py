@@ -27,12 +27,17 @@ def setup_logging(log_filename="app.log", max_bytes=5_000_000, backup_count=3):
         >>> # Simulate a loop to show file rotation in action
         >>> for i in range(50):
         ...    log.info(f"Generating log line entry number {i} to trigger rotation.")
-        
+        >>> log.debug("This is a DEBUG message.")
+        >>> log.info("This is an INFO message.")
+        >>> log.warning("This is a WARNING message.")
+        >>> log.error("This is an ERROR message.")
+        >>> log.critical("This is a CRITICAL message.")    
+            
         >>> log.warning('Remember to clean up by deleting all test.log* files (rm test.log*)')
     """
     # 1. Initialize the logger
-    logger = logging.getLogger("AppLogger")
-    logger.setLevel(logging.INFO)
+    logger = logging.getLogger(log_filename)
+    logger.setLevel(logging.DEBUG)
     
     # Clear existing handlers to prevent duplicate logs if re-initialized
     if logger.hasHandlers():
@@ -53,13 +58,13 @@ def setup_logging(log_filename="app.log", max_bytes=5_000_000, backup_count=3):
         encoding="utf-8"
     )
     file_handler.setFormatter(log_format)
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     logger.addHandler(file_handler)
 
     # 4. Create a Console Handler (Optional: so you can see logs in terminal)
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(log_format)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
     logger.addHandler(console_handler)
 
     return logger
