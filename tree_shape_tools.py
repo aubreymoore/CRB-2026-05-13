@@ -1,6 +1,9 @@
 # Reference: https://www.youtube.com/watch?v=CUjCqOw_oFk
 # Use "pytest --xdoctest" to run doctests
 
+# Here is an example of using xdoctest to test a single function in this module:
+# xdoctest --verbose 2 tree_shape_tools.py create_db_views
+
 import sqlite3
 import json
 import numpy as np
@@ -101,12 +104,23 @@ def create_db_views(dbpath: str):
     v_damage contains the number of damage records associated with each tree in the v_trees view.
     
     Example:
-        >>> create_db_views(dbpath='/home/aubrey/Desktop/cbr-2026-05-13/test.db')  
+        >>> db_path = '/home/aubrey/Desktop/crb-2026-05-13/test.db'
+        >>> # check if the views exist
+        >>> create_db_views(db_path)  
+        >>> conn = sqlite3.connect(db_path)
+        >>> cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='view';")
+        >>> view_names = [row[0] for row in cursor.fetchall()]
+        >>> print(view_names)
+        >>> assert len(view_names) > 0
+        >>> assert 'v_trees' in view_names
+        >>> assert 'v_damage' in view_names
+        >>> conn.close()
     """
     # connect to db and enable spatial extensions
     conn = sqlite3.connect(db_path)
     try:
         with conn:
+            print(f"Creating views v_trees and v_damage in database: {dbpath}")
             conn.execute('DROP VIEW IF EXISTS v_trees;')
             conn.execute(''' 
                 CREATE VIEW v_trees AS
