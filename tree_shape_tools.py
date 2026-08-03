@@ -99,41 +99,45 @@ def create_db_views(dbpath: str):
     Creates views named v_trees and v_damage the current db.
     v_trees view includes columns from the trees table plus the tree_class field from the cluster2class table. 
     v_damage contains the number of damage records associated with each tree in the v_trees view.
+    
+    Example:
+        >>> create_db_views(dbpath='/home/aubrey/Desktop/cbr-2026-05-13/test.db')  
     """
     # connect to db and enable spatial extensions
     conn = sqlite3.connect(db_path)
-    with conn:
-        conn.execute('DROP VIEW IF EXISTS v_trees;')
-        conn.execute(''' 
-            CREATE VIEW v_trees AS
-            SELECT 
-                tree_id, 
-                image_id, 
-                confidence, 
-                tree_poly, 
-                pixel_count, 
-                soft_tree_class, 
-                soft_tree_prob, 
-                tree_cluster, 
-                cluster2class.tree_class
-            FROM trees, cluster2class
-            WHERE trees.soft_tree_class = cluster2class.tree_cluster
-            ''')
-        conn.execute('DROP VIEW IF EXISTS v_damage;')
-        conn.execute(''' 
-            CREATE VIEW v_damage AS
-            SELECT 
-                t.tree_id,  
-                t.tree_class,	
-                COUNT(d.damage_id) AS damage_count
-            FROM v_trees t
-            LEFT JOIN damage d ON t.tree_id = d.tree_id
-            GROUP BY t.tree_id;
-             ''')     
+    try:
+        with conn:
+            conn.execute('DROP VIEW IF EXISTS v_trees;')
+            conn.execute(''' 
+                CREATE VIEW v_trees AS
+                SELECT 
+                    tree_id, 
+                    image_id, 
+                    confidence, 
+                    tree_poly, 
+                    pixel_count, 
+                    soft_tree_class, 
+                    soft_tree_prob, 
+                    tree_cluster, 
+                    cluster2class.tree_class
+                FROM trees, cluster2class
+                WHERE trees.soft_tree_class = cluster2class.tree_cluster
+                ''')
+            conn.execute('DROP VIEW IF EXISTS v_damage;')
+            conn.execute(''' 
+                CREATE VIEW v_damage AS
+                SELECT 
+                    t.tree_id,  
+                    t.tree_class,	
+                    COUNT(d.damage_id) AS damage_count
+                FROM v_trees t
+                LEFT JOIN damage d ON t.tree_id = d.tree_id
+                GROUP BY t.tree_id;
+                ''')
+    except sqlite3.Error as e:
+        print(f"Transaction failed and was rolled back: {e}")
+         
     conn.close()
-    
-# db_path = '/home/aubrey/Desktop/Efate2025/Efate2025B.db'
-# create_db_views(db_path)
        
 ##########################################################################################
 
@@ -494,7 +498,9 @@ def main():
             'train_model': train_model, 
             'classify_tree_shapes': classify_tree_shapes,
             'create_tree_cluster_gallery': create_tree_cluster_gallery,
-            'dict_from_toml': dict_from_toml
+            'run_train_model_pipeline': run_train_model_pipeline,
+            'run_tree_shape_classifier_pipeline': run_tree_shape_classifier_pipeline,
+            'create_db_views': create_db_views,
         })
 
     ################################################

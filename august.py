@@ -2,15 +2,16 @@ import sys
 sys.path.insert(1, '/home/aubrey/crbdd/src') # directory containing roadside.py
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True" # prevents running out of GPU memory
-from roadside import run_sam3_semantic_predictor
-from amutils import setup_logging, dict_from_toml 
-from tree_shape_tools import backup_database, check_trees_table, train_model, classify_tree_shapes, create_tree_cluster_gallery
-from icecream import ic
 import sqlite3
-import exif
-import sqlite3
-import numpy as np
+
 import cv2
+import exif
+import numpy as np
+from icecream import ic
+from roadside import run_sam3_semantic_predictor
+
+from amutils import dict_from_toml, setup_logging
+from tree_shape_tools import check_trees_table, run_tree_shape_classifier_pipeline, create_db_views
 
 ##################
 
@@ -216,7 +217,13 @@ conn.commit()
 
 log.info('### STEP 4: CHECK TREES TABLE')
 check_trees_table(db_path) 
-classify_tree_shapes(db_path, model_path=config['trees']['model_path'])
+# classify_tree_shapes(db_path, model_path=config['trees']['model_path'])
+
+log.info('running tree shape classifier pipeline')
+run_tree_shape_classifier_pipeline(db_path, csv_path=config['trees']['csv_path'])
+
+log.info('creating db views')
+create_db_views(db_path)
 
   
 log.info('FINISHED')
