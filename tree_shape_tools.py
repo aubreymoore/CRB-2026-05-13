@@ -122,6 +122,8 @@ def create_db_views(dbpath: str):
         with conn:
             print(f"Creating views v_trees and v_damage in database: {dbpath}")
             conn.execute('DROP VIEW IF EXISTS v_trees;')
+            conn.commit()
+            
             conn.execute(''' 
                 CREATE VIEW v_trees AS
                 SELECT 
@@ -137,7 +139,11 @@ def create_db_views(dbpath: str):
                 FROM trees, cluster2class
                 WHERE trees.soft_tree_class = cluster2class.tree_cluster
                 ''')
+            conn.commit
+            
             conn.execute('DROP VIEW IF EXISTS v_damage;')
+            conn.commit()
+            
             conn.execute(''' 
                 CREATE VIEW v_damage AS
                 SELECT 
@@ -148,6 +154,8 @@ def create_db_views(dbpath: str):
                 LEFT JOIN damage d ON t.tree_id = d.tree_id
                 GROUP BY t.tree_id;
                 ''')
+            conn.commit()
+            
     except sqlite3.Error as e:
         print(f"Transaction failed and was rolled back: {e}")
          

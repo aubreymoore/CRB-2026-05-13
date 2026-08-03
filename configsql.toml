@@ -103,3 +103,10 @@ SET tree_touches_edge = left_proximity<0.01 OR right_proximity<0.01 OR top_proxi
 FROM temp_touches
 WHERE trees.tree_id = temp_touches.tree_id;
 '''
+
+update_tree_class_sql = '''
+UPDATE trees
+SET tree_class = cluster2class.tree_class
+FROM cluster2class
+WHERE trees.soft_tree_class = cluster2class.tree_cluster;
+'''

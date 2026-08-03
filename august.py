@@ -222,8 +222,9 @@ check_trees_table(db_path)
 log.info('running tree shape classifier pipeline')
 run_tree_shape_classifier_pipeline(db_path, csv_path=config['trees']['csv_path'])
 
-log.info('creating db views')
-create_db_views(db_path)
+log.info('update trees.tree_class based on clustering results')
+conn.execute(configsql['update_tree_class_sql'])
+conn.commit()
 
   
 log.info('FINISHED')
