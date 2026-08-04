@@ -12,6 +12,7 @@ from roadside import run_sam3_semantic_predictor
 
 from amutils import dict_from_toml, setup_logging
 from tree_shape_tools import check_trees_table, run_tree_shape_classifier_pipeline, create_db_views
+from np2sqlite import array2blob, blob2array
 
 ##################
 
@@ -226,6 +227,33 @@ log.info('update trees.tree_class based on clustering results')
 conn.execute(configsql['update_tree_class_sql'])
 conn.commit()
 
+####################################################################
+
+log.info('populate damage.damage_poly')
+
+conn.execute(configsql['create_v_tree_poly_view_sql'])
+
+
+
+
+
+# tree_id = tree_cursor.lastrowid 
+# ic(tree_id)
+# defect_contours = calc_defect_contours(image_height, image_width, tree_contour, config['order'], config['minpixels'])  
+# for defect_contour in defect_contours: 
+#     defect_contour = np.squeeze(defect_contour)         
+#     # convert defect_contour from np.int32 to WKT 
+#     coord_str = ', '.join([f'{coord[0]} {coord[1]}' for coord in defect_contour])
+#     wkt = f"POLYGON (({coord_str}))"
+#     conn.execute(
+#         'INSERT INTO damage (image_id, tree_id, damage_poly) VALUES (?, ?, GeomFromText(?, 0))', 
+#         (image_id, tree_id, wkt)    
+#     ) 
+
+conn.commit() 
+conn.close()
+
+########################################################################
   
 log.info('FINISHED')
 
