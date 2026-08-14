@@ -79,38 +79,38 @@ def fetch_numpy_array(cursor, row_id):
     return array
 
 
-# --- Example Usage Workflow ---
-if __name__ == "__main__":
-    # Setup dummy SQLite/SpatiaLite connection
-    # conn = sqlite3.connect(":memory:") # Use your spatialite file path here
-    conn = sqlite3.connect("npSpatiaLite.db") # Use your spatialite file path here
-    cursor = conn.cursor()
+# # --- Example Usage Workflow ---
+# if __name__ == "__main__":
+#     # Setup dummy SQLite/SpatiaLite connection
+#     # conn = sqlite3.connect(":memory:") # Use your spatialite file path here
+#     conn = sqlite3.connect("npSpatiaLite.db") # Use your spatialite file path here
+#     cursor = conn.cursor()
     
-    # (Optional: Enable SpatiaLite extension if using actual spatial queries)
-    conn.enable_load_extension(True)
-    conn.load_extension("mod_spatialite")
+#     # (Optional: Enable SpatiaLite extension if using actual spatial queries)
+#     conn.enable_load_extension(True)
+#     conn.load_extension("mod_spatialite")
     
-    # Initialize a mock table for this example
-    cursor.execute("""
-        CREATE TABLE image_data (id INTEGER PRIMARY KEY, geometry TEXT, raw_bytes BLOB, shape TEXT, dtype TEXT)
-    """)
+#     # Initialize a mock table for this example
+#     cursor.execute("""
+#         CREATE TABLE image_data (id INTEGER PRIMARY KEY, geometry TEXT, raw_bytes BLOB, shape TEXT, dtype TEXT)
+#     """)
 
-    # Create a typical OpenCV image (BGR Matrix)
-    mock_cv_frame = np.random.randint(0, 255, (720, 1280, 3), dtype=np.uint8)
-    sample_point = "POINT(121.05 14.55)"
+#     # Create a typical OpenCV image (BGR Matrix)
+#     mock_cv_frame = np.random.randint(0, 255, (720, 1280, 3), dtype=np.uint8)
+#     sample_point = "POINT(121.05 14.55)"
 
-    # Save to DB
-    insert_numpy_array(cursor, contour, table_name="image_data", geometry_col="geometry", array=contour)
+#     # Save to DB
+#     insert_numpy_array(cursor, contour, table_name="image_data", geometry_col="geometry", array=contour)
 
-    insert_numpy_array(cursor, conn, geom_wkt='POINT(121.05 14.55)', array=contour)
-    print("Array successfully stored.")
+#     insert_numpy_array(cursor, conn, geom_wkt='POINT(121.05 14.55)', array=contour)
+#     print("Array successfully stored.")
 
-    # Retrieve from DB
-    retrieved_frame = fetch_numpy_array(cursor, 1)
-    print("Array successfully retrieved. Shape matches:", retrieved_frame.shape)
+#     # Retrieve from DB
+#     retrieved_frame = fetch_numpy_array(cursor, 1)
+#     print("Array successfully retrieved. Shape matches:", retrieved_frame.shape)
     
-    # Perfect match check
-    assert np.array_equal(mock_cv_frame, retrieved_frame)
+#     # Perfect match check
+#     assert np.array_equal(mock_cv_frame, retrieved_frame)
     
-    # Ready for immediate CV2 operations
-    # gray = cv2.cvtColor(retrieved_frame, cv2.COLOR_BGR2GRAY)
+#     # Ready for immediate CV2 operations
+#     # gray = cv2.cvtColor(retrieved_frame, cv2.COLOR_BGR2GRAY)

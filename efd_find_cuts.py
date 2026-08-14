@@ -36,12 +36,13 @@ def efd_find_cuts(original_contour, original_mask, order=40, ksize=(3,3), iterat
     This function was created to detect and locate defects in binary masks 
     of coconut palms, such as v-shaped cuts caused by coconut rhinoceros beetles.
     
-    Synthetic contours and masks for testing be provided by the generate_palms_with_cuts function. 
+    Synthetic contours and masks for testing may be provided by the generate_palms_with_cuts function. 
     
     Elliptic Fourier descriptors are calculated and used to reconstruct a "smoothed version" of the original mask.
+    
     Cuts are apparent in the difference between the smoothed mask and the original mask.
     
-    In the final step, noise is removed filtered out using a morphological operation called "opening". 
+    In the final step, noise is removed using a morphological operation called opening". 
     
     Required arguments:
         original_contour    binary mask of a coconut palm
@@ -54,8 +55,19 @@ def efd_find_cuts(original_contour, original_mask, order=40, ksize=(3,3), iterat
         return_plot_data    a binary flag which determines if plot_data are calculated and returned
         
     Return values:
+        A dataclass containing the following attributes:
+        order               the order of the EFDs used to reconstruct the contour
+        ksize               the size of the kernel used by the morphological operation
+        coeffs              the EFD coefficients used to reconstruct the contour
+        original_mask       the original binary mask of the palm
+        reconstructed_mask  the reconstructed binary mask of the palm
+        diff_mask           the difference between the reconstructed and original masks
+        clean_mask          the filtered difference mask, which should contain only the v-cuts      
         vcut_contours       a tuple containing contours (each contour is a numpy array of points; dtype=int32)
-        plot_data           a dict containing binary masks for visualization  
+        vcut_centroids      a numpy array containing the centroids of the detected v-cuts
+        vcut_xs             a numpy array containing the x-coordinates of the detected v-cut centroids
+        vcut_ys             a numpy array containing the y-coordinates of the detected v-cut centroids
+        n_vcuts_detected    the number of v-cuts detected in the original mask
     """
     # calc EFDs
     coeffs = elliptic_fourier_descriptors(original_contour, order, normalize=False)
@@ -73,7 +85,6 @@ def efd_find_cuts(original_contour, original_mask, order=40, ksize=(3,3), iterat
     # Calculate the difference mask
     # Pixels missing in original, present in reconstruction
     diff_mask = cv2.bitwise_and(reconstructed_mask, cv2.bitwise_not(original_mask))
-
 
     # Create clean_mask
     # Define kernel (size depends on how thick the "thin" features are)
@@ -137,6 +148,7 @@ if __name__ == "__main__":
     ic(np.max(results.reconstructed_mask))
     ic(np.max(results.diff_mask))
     ic(np.max(results.clean_mask))
+    ic(results)
     
     my_fig, my_axs = plot_efd_results(results)
     plt.show()
