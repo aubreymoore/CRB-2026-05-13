@@ -3,13 +3,11 @@ sys.path.insert(1, '/home/aubrey/crbdd/src') # directory containing roadside.py
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True" # prevents running out of GPU memory
 import sqlite3
-
 import cv2
 import exif
 import numpy as np
 from icecream import ic
 from roadside import run_sam3_semantic_predictor
-
 from amutils import dict_from_toml, setup_logging
 from tree_shape_tools import check_trees_table, run_tree_shape_classifier_pipeline, create_db_views
 from np2sqlite import array2blob, blob2array
