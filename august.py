@@ -2,6 +2,7 @@ import sys
 sys.path.insert(1, '/home/aubrey/crbdd/src') # directory containing roadside.py
 import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True" # prevents running out of GPU memory
+import logging
 import sqlite3
 import cv2
 import exif
@@ -153,7 +154,7 @@ def add_trees_to_db(conn, image_path, results_cpu):
 # setup logger
 
 log = setup_logging(log_filename='august.log')
-log.setLevel(10)
+log.setLevel(logging.DEBUG)
 log.info('###########################################################################')
 
 # sys.exit()

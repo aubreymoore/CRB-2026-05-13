@@ -112,10 +112,10 @@ WHERE trees.soft_tree_class = cluster2class.tree_cluster;
 '''
 
 ##################################################################
-create_v_tree_poly_view_sql = '''
-CREATE VIEW v_tree_poly AS
-SELECT tree_id, image_height, image_width, tree_poly
-FROM images, trees
-WHERE images.image_id = trees.image_id
-'''
 
+create_v_tree_poly_view_sql = '''
+CREATE VIEW IF NOT EXISTS v_tree_poly AS
+    SELECT tree_id, image_height, image_width, tree_poly
+    FROM images, trees
+    WHERE images.image_id = trees.image_id
+'''
