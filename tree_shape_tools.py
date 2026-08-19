@@ -93,6 +93,7 @@ def run_tree_shape_classifier_pipeline(db_path, csv_path):
     """  
     Converts cluster index to tree_shape index.
     """ 
+    ic()
     create_cluster2class_table(db_path, csv_path)
     create_db_views(db_path)
   

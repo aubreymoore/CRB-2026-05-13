@@ -178,16 +178,23 @@ if config['database']['delete_db']:
     log.info(f'recreating {db_path}')
     if os.path.exists(db_path):
         os.remove(db_path)
+        
+##########
     
 conn = sqlite3.connect(db_path)   
 conn.enable_load_extension(True)
 conn.load_extension('mod_spatialite')
 conn.execute("SELECT InitSpatialMetaData(1);")
+# log.debug(ic(configsql['default_schema_sql']))
+# conn.executescript(configsql['default_schema_sql'])
+# conn.commit()
 
-
-log.debug(ic(configsql['default_schema_sql']))
-conn.executescript(configsql['default_schema_sql'])
+with open('default_schema.sql', 'r') as file:
+    sql_script = file.read()
+conn.executescript(sql_script)
 conn.commit()
+
+##########
 
 log.info('detecting coconut palms in images')
 
@@ -209,11 +216,17 @@ for image_path in image_paths:
     results_cpu = run_sam3_semantic_predictor(image_path, text_prompts)
     add_image_to_db(conn, image_path, results_cpu)
     add_trees_to_db(conn, image_path, results_cpu)
+    
+sys.exit()    
+##########
 
 log.info('### STEP 3: RUN POSTPROCESSING SQL')
-log.debug(ic(configsql['postprocessing_sql']))
-conn.executescript(configsql['postprocessing_sql'])
-conn.commit()  
+with open('postprocessing.sql', 'r') as file:
+    sql_script = file.read()
+conn.executescript(sql_script)
+conn.commit() 
+ 
+##########
 
 log.info('### STEP 4: CHECK TREES TABLE')
 check_trees_table(db_path) 
@@ -226,6 +239,7 @@ log.info('update trees.tree_class based on clustering results')
 conn.execute(configsql['update_tree_class_sql'])
 conn.commit()
 
+sys.exit()
 ####################################################################
 
 log.info('populate damage.damage_poly')

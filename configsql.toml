@@ -104,6 +104,8 @@ FROM temp_touches
 WHERE trees.tree_id = temp_touches.tree_id;
 '''
 
+##################################################################
+
 update_tree_class_sql = '''
 UPDATE trees
 SET tree_class = cluster2class.tree_class
