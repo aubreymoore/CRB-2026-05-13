@@ -216,8 +216,7 @@ for image_path in image_paths:
     results_cpu = run_sam3_semantic_predictor(image_path, text_prompts)
     add_image_to_db(conn, image_path, results_cpu)
     add_trees_to_db(conn, image_path, results_cpu)
-    
-sys.exit()    
+      
 ##########
 
 log.info('### STEP 3: RUN POSTPROCESSING SQL')
@@ -225,11 +224,11 @@ with open('postprocessing.sql', 'r') as file:
     sql_script = file.read()
 conn.executescript(sql_script)
 conn.commit() 
- 
+
 ##########
 
-log.info('### STEP 4: CHECK TREES TABLE')
-check_trees_table(db_path) 
+# log.info('### STEP 4: CHECK TREES TABLE')
+# check_trees_table(db_path) 
 # classify_tree_shapes(db_path, model_path=config['trees']['model_path'])
 
 log.info('running tree shape classifier pipeline')
@@ -239,7 +238,6 @@ log.info('update trees.tree_class based on clustering results')
 conn.execute(configsql['update_tree_class_sql'])
 conn.commit()
 
-sys.exit()
 ####################################################################
 
 log.info('populate damage.damage_poly')

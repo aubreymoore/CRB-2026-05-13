@@ -26,6 +26,11 @@ CREATE TABLE IF NOT EXISTS trees (
     class_id INTEGER,
     confidence REAL,
     tree_touches_edge INTEGER DEFAULT 0,
+    pixel_count DOUBLE,
+    shape_class INTEGER,
+    soft_tree_class INTEGER,
+    soft_tree_prob REAL,
+    tree_class TEXT,
     FOREIGN KEY (image_id) REFERENCES images (image_id) ON DELETE CASCADE 
 );
 

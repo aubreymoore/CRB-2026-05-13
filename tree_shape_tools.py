@@ -4,6 +4,9 @@
 # Here is an example of using xdoctest to test a single function in this module:
 # xdoctest --verbose 2 tree_shape_tools.py create_db_views
 
+# This library imports the python fire library to implement a CLI
+# Reference: https://www.youtube.com/watch?v=F0V5c4-i81k&t=3s
+
 import sqlite3
 import json
 import numpy as np
@@ -480,7 +483,9 @@ def classify_tree_shapes(db_path:str, model_path:str):
 def check_trees_table(db_path):
     """ 
     Ensures required fields exist in trees table.
-    Populates pixel_count field. 
+    Populates pixel_count field.
+    
+    model is saved as hdbscan_pipeline_1.joblib
     """    
     conn = sqlite3.connect(db_path)
     conn.enable_load_extension(True)
