@@ -23,7 +23,6 @@ SELECT CreateSpatialIndex('images', 'location');
 CREATE TABLE IF NOT EXISTS trees (
     tree_id INTEGER PRIMARY KEY AUTOINCREMENT,
     image_id INTEGER,
-    class_id INTEGER,
     confidence REAL,
     tree_touches_edge INTEGER DEFAULT 0,
     pixel_count DOUBLE,

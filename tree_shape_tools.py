@@ -103,7 +103,7 @@ def run_tree_shape_classifier_pipeline(db_path, csv_path):
       
 def create_db_views(dbpath: str):
     """ 
-    Creates views named v_trees and v_damage the current db.
+    Creates views named v_trees and v_damage in the current db.
     v_trees view includes columns from the trees table plus the tree_class field from the cluster2class table. 
     v_damage contains the number of damage records associated with each tree in the v_trees view.
     

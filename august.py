@@ -10,7 +10,7 @@ import numpy as np
 from icecream import ic
 from roadside import run_sam3_semantic_predictor
 from amutils import dict_from_toml, setup_logging
-from tree_shape_tools import check_trees_table, run_tree_shape_classifier_pipeline, create_db_views
+from tree_shape_tools import check_trees_table, run_tree_shape_classifier_pipeline, create_db_views, classify_tree_shapes
 from np2sqlite import array2blob, blob2array
 
 ##################
@@ -139,11 +139,11 @@ def add_trees_to_db(conn, image_path, results_cpu):
         
         # 4. Insert into the database
         
-        class_id = class_list[i]
+        # class_id = class_list[i]
         confidence = conf_list[i]
         conn.execute(
-            "INSERT INTO trees (image_id, class_id, confidence, tree_poly) VALUES (?, ?, ?, GeomFromText(?, 0))", 
-            (image_id, class_id, confidence, wkt)
+            "INSERT INTO trees (image_id, confidence, tree_poly) VALUES (?, ?, GeomFromText(?, 0))", 
+            (image_id, confidence, wkt)
         )
         conn.commit()
 
@@ -225,24 +225,31 @@ with open('postprocessing.sql', 'r') as file:
 conn.executescript(sql_script)
 conn.commit() 
 
+# sys.exit()
 ##########
 
-# log.info('### STEP 4: CHECK TREES TABLE')
-# check_trees_table(db_path) 
-# classify_tree_shapes(db_path, model_path=config['trees']['model_path'])
+log.info('### STEP 4: CHECK TREES TABLE')
+check_trees_table(db_path) 
+
+# REFACTOR
+# classify tree shapes using this filter:     additional_filters='AND confidence>0.4 AND tree_touches_edge=0 AND pixel_count > 400'
+classify_tree_shapes(db_path, model_path=config['trees']['model_path'])
 
 log.info('running tree shape classifier pipeline')
 run_tree_shape_classifier_pipeline(db_path, csv_path=config['trees']['csv_path'])
 
-log.info('update trees.tree_class based on clustering results')
-conn.execute(configsql['update_tree_class_sql'])
-conn.commit()
+# log.info('update trees.tree_class based on clustering results')
+with open('tree_class_lookup.sql', 'r') as file:
+    sql_script = file.read()
+conn.executescript(sql_script)
+conn.commit() 
 
+sys.exit()
 ####################################################################
 
-log.info('populate damage.damage_poly')
+# log.info('populate damage.damage_poly')
 
-conn.execute(configsql['create_v_tree_poly_view_sql'])
+# conn.execute(configsql['create_v_tree_poly_view_sql'])
 
 
 
