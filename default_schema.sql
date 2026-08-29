@@ -46,7 +46,7 @@ SELECT CreateSpatialIndex('trees', 'tree_poly');
 -- damage table
 
 CREATE TABLE IF NOT EXISTS damage (
-    damage_id INTEGER PRIMARY KEY, 
+    damage_id INTEGER PRIMARY KEY AUTOINCREMENT, 
     image_id INTEGER,
     tree_id INTEGER, 
     FOREIGN KEY (tree_id) REFERENCES trees(tree_id) ON DELETE CASCADE
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS damage (
 
     SELECT AddGeometryColumn(
     'damage',            -- Table name
-    'damage_poly',              -- Column name
+    'damage_poly',       -- Column name
     0,                   -- SRID (-1 or 0 signifies flat pixel/Cartesian space)
     'POLYGON',           -- Geometry type
     'XY'                 -- 2D coordinates
