@@ -101,7 +101,7 @@ def run_tree_shape_classifier_pipeline(db_path, csv_path):
     create_db_views(db_path)
   
       
-def create_db_views(dbpath: str):
+def create_db_views(db_path: str):
     """ 
     Creates views named v_trees and v_damage in the current db.
     v_trees view includes columns from the trees table plus the tree_class field from the cluster2class table. 
@@ -124,7 +124,7 @@ def create_db_views(dbpath: str):
     conn = sqlite3.connect(db_path)
     try:
         with conn:
-            print(f"Creating views v_trees and v_damage in database: {dbpath}")
+            print(f"Creating views v_trees and v_damage in database: {db_path}")
             conn.execute('DROP VIEW IF EXISTS v_trees;')
             conn.commit()
             
@@ -164,6 +164,9 @@ def create_db_views(dbpath: str):
         print(f"Transaction failed and was rolled back: {e}")
          
     conn.close()
+    
+# # Usage example:
+# create_db_views('test.db')
        
 ##########################################################################################
 
