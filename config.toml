@@ -13,5 +13,10 @@ min_prob = 0.2
 csv_path = 'cluster2class.csv'
 
 [damage]
+model_path = 'hdbscan_damage_pipeline.joblib'
+gallery_dir = 'damage_cluster_gallery_1'
+images_per_cluster = 35
+min_prob = 0.2
+csv_path = 'damage_cluster2class.csv'
 order = 14
 minpixels = 50
