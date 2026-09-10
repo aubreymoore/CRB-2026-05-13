@@ -81,9 +81,9 @@ def cause_runtime_error():
 ##########################################################################################
 
 
-def run_train_model_pipeline(db_path, db_backup_dir, model_path, images_per_cluster, gallery_dir, min_prob):
+def run_train_damage_model_shape_pipeline(db_path, db_backup_dir, model_path, images_per_cluster, gallery_dir, min_prob):
     """  
-    Trains an HDBSCAN model to assign tree shapes to clusters.
+    Trains an HDBSCAN model to assign model shapes to clusters.
     """
     backup_database(db_path, db_backup_dir)  
     check_trees_table(db_path) 
@@ -92,7 +92,7 @@ def run_train_model_pipeline(db_path, db_backup_dir, model_path, images_per_clus
     create_tree_cluster_gallery(db_path, images_per_cluster, gallery_dir, min_prob)
 
 
-def run_tree_shape_classifier_pipeline(db_path, csv_path):
+def run_damage_shape_classifier_pipeline(db_path, csv_path):
     """  
     Converts cluster index to tree_shape index.
     """ 
@@ -529,8 +529,8 @@ def main():
             'train_model': train_model, 
             'classify_tree_shapes': classify_tree_shapes,
             'create_tree_cluster_gallery': create_tree_cluster_gallery,
-            'run_train_model_pipeline': run_train_model_pipeline,
-            'run_tree_shape_classifier_pipeline': run_tree_shape_classifier_pipeline,
+            'run_train_damage_shape_model_pipeline': run_train_damage_model_shape_pipeline,
+            'run_damage_shape_classifier_pipeline': run_damage_shape_classifier_pipeline,
             'create_db_views': create_db_views,
         })
 
