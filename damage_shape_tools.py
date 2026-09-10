@@ -2,7 +2,7 @@
 # Use "pytest --xdoctest" to run doctests
 
 # Here is an example of using xdoctest to test a single function in this module:
-# xdoctest --verbose 2 tree_shape_tools.py create_db_views
+# xdoctest --verbose 2 damage_shape_tools.py create_db_views
 
 # This library imports the python fire library to implement a CLI
 # Reference: https://www.youtube.com/watch?v=F0V5c4-i81k&t=3s
