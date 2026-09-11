@@ -86,84 +86,83 @@ def run_train_damage_model_shape_pipeline(db_path, db_backup_dir, model_path, im
     Trains an HDBSCAN model to assign model shapes to clusters.
     """
     backup_database(db_path, db_backup_dir)  
-    check_trees_table(db_path) 
+    check_damage_table(db_path) 
     train_model(db_path, model_path)    
-    classify_tree_shapes(db_path, model_path)
-    create_tree_cluster_gallery(db_path, images_per_cluster, gallery_dir, min_prob)
+    classify_damage_shapes(db_path, model_path)
+    create_damage_cluster_gallery(db_path, images_per_cluster, gallery_dir, min_prob)
 
 
 def run_damage_shape_classifier_pipeline(db_path, csv_path):
     """  
-    Converts cluster index to tree_shape index.
+    Converts cluster index to damage_shape index.
     """ 
     ic()
     create_cluster2class_table(db_path, csv_path)
     create_db_views(db_path)
   
       
-def create_db_views(db_path: str):
-    """ 
-    Creates views named v_trees and v_damage in the current db.
-    v_trees view includes columns from the trees table plus the tree_class field from the cluster2class table. 
-    v_damage contains the number of damage records associated with each tree in the v_trees view.
+# def create_damage_view(db_path: str):
+#     """ 
+#     Creates views named v_damage in the current db.
+#     v_damage contains the number of damage records associated with each damage in the v_damage view.
     
-    Example:
-        >>> db_path = '/home/aubrey/Desktop/crb-2026-05-13/test.db'
-        >>> # check if the views exist
-        >>> create_db_views(db_path)  
-        >>> conn = sqlite3.connect(db_path)
-        >>> cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='view';")
-        >>> view_names = [row[0] for row in cursor.fetchall()]
-        >>> print(view_names)
-        >>> assert len(view_names) > 0
-        >>> assert 'v_trees' in view_names
-        >>> assert 'v_damage' in view_names
-        >>> conn.close()
-    """
-    # connect to db and enable spatial extensions
-    conn = sqlite3.connect(db_path)
-    try:
-        with conn:
-            print(f"Creating views v_trees and v_damage in database: {db_path}")
-            conn.execute('DROP VIEW IF EXISTS v_trees;')
-            conn.commit()
+#     Example:
+#         >>> db_path = '/home/aubrey/Desktop/crb-2026-05-13/test.db'
+#         >>> # check if the views exist
+#         >>> create_db_views(db_path)  
+#         >>> conn = sqlite3.connect(db_path)
+#         >>> cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='view';")
+#         >>> view_names = [row[0] for row in cursor.fetchall()]
+#         >>> print(view_names)
+#         >>> assert len(view_names) > 0
+#         >>> assert 'v_damage' in view_names
+#         >>> assert 'v_damage' in view_names
+#         >>> conn.close()
+#     """
+#     # connect to db and enable spatial extensions
+#     conn = sqlite3.connect(db_path)
+#     try:
+#         with conn:
+#             print(f"Creating views v_damage in database: {db_path}")
+#             conn.execute('DROP VIEW IF EXISTS v_damage;')
+#             conn.commit()
             
-            conn.execute(''' 
-                CREATE VIEW v_trees AS
-                SELECT 
-                    tree_id, 
-                    image_id, 
-                    confidence, 
-                    tree_poly, 
-                    pixel_count, 
-                    soft_tree_class, 
-                    soft_tree_prob, 
-                    tree_cluster, 
-                    cluster2class.tree_class
-                FROM trees, cluster2class
-                WHERE trees.soft_tree_class = cluster2class.tree_cluster
-                ''')
-            conn.commit
+#             conn.execute(''' 
+#                 CREATE VIEW v_damage AS
+#                 SELECT 
+#                     damage_id, 
+#                     image_id, 
+#                     confidence, 
+#                     damage_poly, 
+#                     pixel_count, 
+#                     soft_damage_class, 
+#                     soft_damage_prob, 
+#                     damage_cluster, 
+#                     cluster2class.damage_class
+#                 FROM damage, cluster2class
+#                 WHERE damage.soft_damage_class = cluster2class.damage_cluster
+#                 ''')
+#             conn.commit
             
-            conn.execute('DROP VIEW IF EXISTS v_damage;')
-            conn.commit()
+#             conn.execute('DROP VIEW IF EXISTS v_damage;')
+#             conn.commit()
             
-            conn.execute(''' 
-                CREATE VIEW v_damage AS
-                SELECT 
-                    t.tree_id,  
-                    t.tree_class,	
-                    COUNT(d.damage_id) AS damage_count
-                FROM v_trees t
-                LEFT JOIN damage d ON t.tree_id = d.tree_id
-                GROUP BY t.tree_id;
-                ''')
-            conn.commit()
+#             conn.execute(''' 
+#                 CREATE VIEW v_damage AS
+#                 SELECT 
+#                     t.damage_id,  
+#                     t.damage_class,	
+#                     COUNT(d.damage_id) AS damage_count
+#                 FROM v_damage t
+#                 LEFT JOIN damage d ON t.damage_id = d.damage_id
+#                 GROUP BY t.damage_id;
+#                 ''')
+#             conn.commit()
             
-    except sqlite3.Error as e:
-        print(f"Transaction failed and was rolled back: {e}")
+#     except sqlite3.Error as e:
+#         print(f"Transaction failed and was rolled back: {e}")
          
-    conn.close()
+#     conn.close()
     
 # # Usage example:
 # create_db_views('test.db')
@@ -186,7 +185,7 @@ backup_database(db_path)
 def create_cluster2class_table(db_path: str, csv_path :str='cluster2class.csv') -> None:
     """  
     Imports a csv file into a new database table named 'cluster_class'
-    The csv file should contain 2 columns: 'tree_cluster' (integer) and 'tree_class' (string)
+    The csv file should contain 2 columns: 'damage_cluster' (integer) and 'damage_class' (string)
     If csv_path does not exist, a FileNotFound error is raised with a message instructions 
     on creation of cluster2class.csv.
     
@@ -200,16 +199,16 @@ def create_cluster2class_table(db_path: str, csv_path :str='cluster2class.csv') 
 
 ###############################################################################################
 
-def create_tree_cluster_gallery(db_path:str, images_per_cluster:int, gallery_dir:str, min_prob:float=0.2):
+def create_damage_cluster_gallery(db_path:str, images_per_cluster:int, gallery_dir:str, min_prob:float=0.2):
     """
-    Creates a gallery of images for each HDBSCAN cluster (soft_tree_class).    
-    Images are saved in folders named "tree_cluster_gallery/cluster_nn" where n is "soft_tree_class"
-    A limit of images_per_cluster images with the largest soft_tree_prob greater than 0.2 are saved
+    Creates a gallery of images for each HDBSCAN cluster (soft_damage_class).    
+    Images are saved in folders named "damage_cluster_gallery/cluster_nn" where n is "soft_damage_class"
+    A limit of images_per_cluster images with the largest soft_damage_prob greater than 0.2 are saved
     
     db_path:            path to Spatialite database
     images_per_cluster: maximum number of images generated per cluster
     gallery_dir:        path to gallery
-    min_prob:           minimum soft_tree_prob for inclusion in examples
+    min_prob:           minimum soft_damage_prob for inclusion in examples
     """
     ic()
     ic(db_path, images_per_cluster, gallery_dir, min_prob)
@@ -220,31 +219,31 @@ def create_tree_cluster_gallery(db_path:str, images_per_cluster:int, gallery_dir
     conn.load_extension('mod_spatialite')
     conn.row_factory = sqlite3.Row # enables access by column name
     
-    # get list of tree classes
+    # get list of damage classes
     sql = """  
-    SELECT DISTINCT(soft_tree_class) 
-    FROM trees 
-    WHERE soft_tree_class IS NOT NULL 
-    ORDER BY soft_tree_class
+    SELECT DISTINCT(soft_damage_class) 
+    FROM damage
+    WHERE soft_damage_class IS NOT NULL 
+    ORDER BY soft_damage_class
     """
     with conn:
         cursor = conn.execute(sql)
-        soft_tree_classes = [row['soft_tree_class'] for row in cursor.fetchall()]
-    ic(soft_tree_classes)
+        soft_damage_classes = [row['soft_damage_class'] for row in cursor.fetchall()]
+    ic(soft_damage_classes)
 
-    # Create and save sample images for each tree shape class 
-    shutil.rmtree(gallery_dir, ignore_errors=True)  # Remove existing directory if it exists
-    for soft_tree_class in soft_tree_classes:
-        tree_class_dir = f"{gallery_dir}/cluster_{soft_tree_class:02}"
-        os.makedirs(tree_class_dir, exist_ok=True)
+    # Create and save sample images for each damage shape class 
+    shutil.rmdamage(gallery_dir, ignore_errors=True)  # Remove existing directory if it exists
+    for soft_damage_class in soft_damage_classes:
+        damage_class_dir = f"{gallery_dir}/cluster_{soft_damage_class:02}"
+        os.makedirs(damage_class_dir, exist_ok=True)
         
         sql = f""" 
-        SELECT image_path, tree_id, AsGeoJSON(tree_poly) AS tree_contour_json
-        FROM trees
+        SELECT image_path, damage_id, AsGeoJSON(damage_poly) AS damage_contour_json
+        FROM damage
         JOIN images USING (image_id)
-        WHERE soft_tree_class = {soft_tree_class} 
-          AND soft_tree_prob > {min_prob}
-        ORDER BY soft_tree_prob DESC
+        WHERE soft_damage_class = {soft_damage_class} 
+          AND soft_damage_prob > {min_prob}
+        ORDER BY soft_damage_prob DESC
         LIMIT {images_per_cluster}
         """
         
@@ -255,7 +254,7 @@ def create_tree_cluster_gallery(db_path:str, images_per_cluster:int, gallery_dir
             cursor.close()
         
         for row in rows:        
-            geojson_data = json.loads(row['tree_contour_json'])
+            geojson_data = json.loads(row['damage_contour_json'])
             coords = geojson_data["coordinates"][0]
             contour = np.array(coords, dtype=np.int32).reshape((-1, 1, 2))
             
@@ -272,13 +271,13 @@ def create_tree_cluster_gallery(db_path:str, images_per_cluster:int, gallery_dir
                 
                 cv2.drawContours(canvas, [cnt], -1, 255, thickness=cv2.FILLED)
                 cv2.flip(canvas, 0, dst=canvas)  # Flip vertically for correct orientation
-                cv2.imwrite(f"{tree_class_dir}/{row['tree_id']}.png", canvas)
+                cv2.imwrite(f"{damage_class_dir}/{row['damage_id']}.png", canvas)
 
 # db_path = '/home/aubrey/Desktop/Efate2025/Efate2025B.db'
-# gallery_dir = 'tree_cluster_gallery_1'
+# gallery_dir = 'damage_cluster_gallery_1'
 # images_per_cluster = 35
 # min_prob = '0.2'              
-# create_tree_cluster_gallery(db_path, images_per_cluster, gallery_dir, min_prob)
+# create_damage_cluster_gallery(db_path, images_per_cluster, gallery_dir, min_prob)
  
  #########################################################################################                             
 def get_spatialite_contours(db_path, table_name, geom_column, additional_filters='', limit=100):
@@ -296,10 +295,10 @@ def get_spatialite_contours(db_path, table_name, geom_column, additional_filters
     Returns:
         list of np.ndarray: A list of arrays, each with shape (N, 1, 2) and dtype int32.
         
-    Example for additional_filters argument: 'AND confidence>0.5 AND tree_touches_edge=0'
+    Example for additional_filters argument: 'AND confidence>0.5 AND damage_touches_edge=0'
     """
     contours = []
-    tree_ids = []
+    damage_ids = []
     
     # 1. Connect and query the database
     conn = sqlite3.connect(db_path)
@@ -307,7 +306,7 @@ def get_spatialite_contours(db_path, table_name, geom_column, additional_filters
     conn.enable_load_extension(True)
     conn.load_extension('mod_spatialite')
     query = f"""
-        SELECT AsGeoJSON({geom_column}), tree_id 
+        SELECT AsGeoJSON({geom_column}), damage_id 
         FROM {table_name} 
         WHERE {geom_column} IS NOT NULL 
         {additional_filters}
@@ -323,7 +322,7 @@ def get_spatialite_contours(db_path, table_name, geom_column, additional_filters
             if not row[0]:
                 continue
             
-            tree_ids.append(row[1])    
+            damage_ids.append(row[1])    
             geojson_data = json.loads(row[0])
             geom_type = geojson_data.get("type")
             
@@ -344,7 +343,7 @@ def get_spatialite_contours(db_path, table_name, geom_column, additional_filters
         # Ensure the connection closes even if an error occurs
         conn.close()
         
-    return contours, tree_ids
+    return contours, damage_ids
 
 ################################################################################
 
@@ -366,22 +365,22 @@ def extract_invariant_features(contour, log_transform=False):
 
 def train_model(db_path, model_path):
     """  
-    Trains a HDBSCAN model to cluster tree shapes (polygons).
+    Trains a HDBSCAN model to cluster damage shapes (polygons).
     Inputs are invariant Hu moments of polygons.
     Outputs are cluster indices.
     
     The trained model can be loaded and executed by this function:
-    classify_tree_shapes(db_path:str, model_path:str, cluster2class:dict)
+    classify_damage_shapes(db_path:str, model_path:str, cluster2class:dict)
     
-    Note that the cluster2class dictionary must be constructed by visual inspection of tree shape clusters.
+    Note that the cluster2class dictionary must be constructed by visual inspection of damage shape clusters.
     """
     ic(db_path)
-    # Get tree contours and calculate invariant features (Hu moments)
-    contours, tree_ids = get_spatialite_contours(
+    # Get damage contours and calculate invariant features (Hu moments)
+    contours, damage_ids = get_spatialite_contours(
         db_path=db_path,
-        table_name='trees',
-        geom_column='tree_poly',
-        additional_filters='AND confidence>0.4 AND tree_touches_edge=0 AND pixel_count > 400',
+        table_name='damage',
+        geom_column='damage_poly',
+        additional_filters='AND confidence>0.4 AND damage_touches_edge=0 AND pixel_count > 400',
         limit=1000000   
     )
     features = np.array([extract_invariant_features(c) for c in contours])
@@ -403,9 +402,9 @@ def train_model(db_path, model_path):
 
 ##############################################################################################
 
-def classify_tree_shapes(db_path:str, model_path:str):
+def classify_damage_shapes(db_path:str, model_path:str):
     """  
-    This function uses a trained HDBSCAN model to assign a values in the trees.tree_poly field into clusters.
+    This function uses a trained HDBSCAN model to assign a values in the damage.damage_poly field into clusters.
     The shape is then assigned to a class using the cluster2class dictionary.
     """
     ic(db_path, model_path)
@@ -414,15 +413,15 @@ def classify_tree_shapes(db_path:str, model_path:str):
     conn.enable_load_extension(True)
     conn.load_extension('mod_spatialite')
     
-    # Get tree contours and extract invariant features
-    contours, tree_ids = get_spatialite_contours(
+    # Get damage contours and extract invariant features
+    contours, damage_ids = get_spatialite_contours(
         db_path=db_path,
-        table_name='trees',
-        geom_column='tree_poly',
-        additional_filters='AND confidence>0.4 AND tree_touches_edge=0 AND pixel_count > 400',
+        table_name='damage',
+        geom_column='damage_poly',
+        additional_filters='AND confidence>0.4 AND damage_touches_edge=0 AND pixel_count > 400',
         limit=1000000   
     )
-    ic(type(tree_ids), ic(len(tree_ids)));
+    ic(type(damage_ids), ic(len(damage_ids)));
     features = np.array([extract_invariant_features(c) for c in contours])
     ic(features);
     
@@ -447,31 +446,31 @@ def classify_tree_shapes(db_path:str, model_path:str):
     is_noise = row_sums == 0
     ic(f"Number of noise points: {np.sum(is_noise)}");
     
-    # gets the index of largest value in each row: this will be the tree_class
-    soft_tree_classes = np.argmax(soft_probabilities, axis=1) 
-    ic(soft_tree_classes)
+    # gets the index of largest value in each row: this will be the damage_class
+    soft_damage_classes = np.argmax(soft_probabilities, axis=1) 
+    ic(soft_damage_classes)
     
     # gets the largest value in each row: this will be the probability 
-    soft_tree_probs = np.max(soft_probabilities, axis=1)
-    ic(soft_tree_probs)
+    soft_damage_probs = np.max(soft_probabilities, axis=1)
+    ic(soft_damage_probs)
     
     ic(hdbscan_model.labels_)
     
     # Update database with predicted cluster labels and probabilities
     cursor = conn.cursor()
-    for tree_id in tree_ids:
-        idx = tree_ids.index(tree_id)
+    for damage_id in damage_ids:
+        idx = damage_ids.index(damage_id)
         if idx % 1000 == 0:
-            print(f"Processing tree_id: {tree_id} (index {idx})")
+            print(f"Processing damage_id: {damage_id} (index {idx})")
         shape_class = int(hdbscan_model.labels_[idx])
-        soft_tree_class = int(soft_tree_classes[idx])
-        soft_tree_prob = float(soft_tree_probs[idx])
+        soft_damage_class = int(soft_damage_classes[idx])
+        soft_damage_prob = float(soft_damage_probs[idx])
         cursor.execute(f""" 
-            UPDATE trees 
+            UPDATE damage
             SET shape_class = {shape_class}, 
-                soft_tree_class = {soft_tree_class}, 
-                soft_tree_prob = {soft_tree_prob}  
-            WHERE tree_id = {tree_id}
+                soft_damage_class = {soft_damage_class}, 
+                soft_damage_prob = {soft_damage_prob}  
+            WHERE damage_id = {damage_id}
         """)
     conn.commit()
     conn.close()
@@ -479,13 +478,13 @@ def classify_tree_shapes(db_path:str, model_path:str):
     
 # db_path = '/home/aubrey/Desktop/Efate2025/Efate2025B.db'
 # model_path = 'hdbscan_pipeline_1.joblib'
-# classify_tree_shapes(db_path, model_path)
+# classify_damage_shapes(db_path, model_path)
      
 ##################################################################################
 
-def check_trees_table(db_path):
+def check_damage_table(db_path):
     """ 
-    Ensures required fields exist in trees table.
+    Ensures required fields exist in damage table.
     Populates pixel_count field.
     
     model is saved as hdbscan_pipeline_1.joblib
@@ -494,23 +493,24 @@ def check_trees_table(db_path):
     conn.enable_load_extension(True)
     conn.load_extension('mod_spatialite')
     
-    # get field names from trees table
+    # get field names from damage table
     with conn:
-        cursor = conn.execute("PRAGMA table_info(trees)")
+        cursor = conn.execute("PRAGMA table_info(damage)")
         field_names = [row[1] for row in cursor.fetchall()]
         ic(field_names)
     
     # ensure fields exist
     with conn:
-        if 'pixel_count' not in field_names:     conn.execute('ALTER TABLE trees ADD COLUMN pixel_count DOUBLE')
-        if 'shape_class' not in field_names:     conn.execute('ALTER TABLE trees ADD COLUMN shape_class INTEGER')
-        if 'soft_tree_class' not in field_names: conn.execute('ALTER TABLE trees ADD COLUMN soft_tree_class INTEGER')
-        if 'soft_tree_prob' not in field_names:  conn.execute('ALTER TABLE trees ADD COLUMN soft_tree_prob REAL')
-        if 'tree_class' not in field_names:      conn.execute('ALTER TABLE trees ADD COLUMN tree_class TEXT')
+        if 'pixel_count' not in field_names:     conn.execute('ALTER TABLE damage ADD COLUMN pixel_count DOUBLE')
+        if 'shape_class' not in field_names:     conn.execute('ALTER TABLE damage ADD COLUMN shape_class INTEGER')
+        if 'soft_damage_class' not in field_names: conn.execute('ALTER TABLE damage ADD COLUMN soft_damage_class INTEGER')
+        if 'soft_damage_prob' not in field_names:  conn.execute('ALTER TABLE damage ADD COLUMN soft_damage_prob REAL')
+        if 'confidence' not in field_names:  conn.execute('ALTER TABLE damage ADD COLUMN confidence REAL')
+        if 'damage_class' not in field_names:      conn.execute('ALTER TABLE damage ADD COLUMN damage_class TEXT')
            
-    # populate pixel_count field (= area of tree_poly in pixels)
+    # populate pixel_count field (= area of damage_poly in pixels)
     with conn:
-        conn.execute('UPDATE trees SET pixel_count = ST_Area(tree_poly)')
+        conn.execute('UPDATE damage SET pixel_count = ST_Area(damage_poly)')
     conn.close()
     
     ############################################
@@ -525,13 +525,13 @@ def main():
         os.environ["PAGER"] = "cat" # disables output in full page format
         fire.Fire({
             'backup_database': backup_database,   
-            'check_trees': check_trees_table, 
+            'check_damage_table': check_damage_table, 
             'train_model': train_model, 
-            'classify_tree_shapes': classify_tree_shapes,
-            'create_tree_cluster_gallery': create_tree_cluster_gallery,
+            'classify_damage_shapes': classify_damage_shapes,
+            'create_damage_cluster_gallery': create_damage_cluster_gallery,
             'run_train_damage_shape_model_pipeline': run_train_damage_model_shape_pipeline,
             'run_damage_shape_classifier_pipeline': run_damage_shape_classifier_pipeline,
-            'create_db_views': create_db_views,
+            # 'create_db_views': create_db_views,
         })
 
     ################################################
