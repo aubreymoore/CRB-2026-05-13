@@ -312,6 +312,7 @@ def get_spatialite_contours(db_path, table_name, geom_column, additional_filters
         {additional_filters}
         LIMIT {limit};
     """
+    ic(query)
     
     try:
         cursor.execute(query)
@@ -380,7 +381,7 @@ def train_model(db_path, model_path):
         db_path=db_path,
         table_name='damage',
         geom_column='damage_poly',
-        additional_filters='AND confidence>0.4 AND damage_touches_edge=0 AND pixel_count > 400',
+        additional_filters='AND confidence>0.4 AND tree_touches_edge=0 AND pixel_count > 400',
         limit=1000000   
     )
     features = np.array([extract_invariant_features(c) for c in contours])
