@@ -270,7 +270,7 @@ def create_damage_cluster_gallery(db_path:str, images_per_cluster:int, gallery_d
     ic(soft_damage_classes)
 
     # Create and save sample images for each damage shape class 
-    shutil.rmdamage(gallery_dir, ignore_errors=True)  # Remove existing directory if it exists
+    shutil.rmtree(gallery_dir, ignore_errors=True)  # Remove existing directory if it exists
     for soft_damage_class in soft_damage_classes:
         damage_class_dir = f"{gallery_dir}/cluster_{soft_damage_class:02}"
         os.makedirs(damage_class_dir, exist_ok=True)
@@ -431,7 +431,6 @@ def train_model(db_path, model_path):
     #     limit=1000000   
     # )
     
-    ic('hi')
     with open_db(db_path) as conn:
         cursor = conn.cursor()
         query = '''
@@ -441,17 +440,26 @@ def train_model(db_path, model_path):
             trees.tree_id = damage.tree_id
             AND tree_touches_edge = 0
             AND trees.pixel_count > 400
-        LIMIT 3 '''
+        LIMIT 1000 ''' # training with 1000 damage polygons
         cursor.execute(query)
-        results = cursor.fetchall()
-    print(results)
+        rows = cursor.fetchall()
         
-    
-    
+    damage_ids = []
+    contours = []
+    for row in rows:
+        if not row[0]:
+                continue       
+        damage_ids.append(row['damage_id'])    
+        geojson_data = json.loads(row['geojson_data'])
+        ic(geojson_data)
+        # Extract exterior ring coordinates
+        coords = geojson_data["coordinates"][0]
+        pts = np.array(coords, dtype=np.int32).reshape((-1, 1, 2))
+        contours.append(pts)
+
     ######################################################################################
     
     features = np.array([extract_invariant_features(c) for c in contours])
-    ic(features);
 
     # Create, run and save pipeline
     hdbscan_pipeline = Pipeline([
@@ -476,19 +484,47 @@ def classify_damage_shapes(db_path:str, model_path:str):
     """
     ic(db_path, model_path)
     
-    conn = sqlite3.connect(db_path)
-    conn.enable_load_extension(True)
-    conn.load_extension('mod_spatialite')
+    # conn = sqlite3.connect(db_path)
+    # conn.enable_load_extension(True)
+    # conn.load_extension('mod_spatialite')
     
-    # Get damage contours and extract invariant features
-    contours, damage_ids = get_spatialite_contours(
-        db_path=db_path,
-        table_name='damage',
-        geom_column='damage_poly',
-        additional_filters='AND confidence>0.4 AND damage_touches_edge=0 AND pixel_count > 400',
-        limit=1000000   
-    )
-    ic(type(damage_ids), ic(len(damage_ids)));
+    # # Get damage contours and extract invariant features
+    # contours, damage_ids = get_spatialite_contours(
+    #     db_path=db_path,
+    #     table_name='damage',
+    #     geom_column='damage_poly',
+    #     additional_filters='AND confidence>0.4 AND damage_touches_edge=0 AND pixel_count > 400',
+    #     limit=1000000   
+    # )
+    # ic(type(damage_ids), ic(len(damage_ids)));
+    
+    # RUN SAME QUERY AS USED IN TRAINING
+    with open_db(db_path) as conn:
+        cursor = conn.cursor()
+        query = '''
+        SELECT damage_id, AsGeoJSON(damage_poly) AS geojson_data
+        FROM trees, damage
+        WHERE 
+            trees.tree_id = damage.tree_id
+            AND tree_touches_edge = 0
+            AND trees.pixel_count > 400
+        LIMIT 1000 ''' # training with 1000 damage polygons
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        
+    damage_ids = []
+    contours = []
+    for row in rows:
+        if not row[0]:
+                continue       
+        damage_ids.append(row['damage_id'])    
+        geojson_data = json.loads(row['geojson_data'])
+        ic(geojson_data)
+        # Extract exterior ring coordinates
+        coords = geojson_data["coordinates"][0]
+        pts = np.array(coords, dtype=np.int32).reshape((-1, 1, 2))
+        contours.append(pts)
+
     features = np.array([extract_invariant_features(c) for c in contours])
     ic(features);
     
@@ -524,23 +560,23 @@ def classify_damage_shapes(db_path:str, model_path:str):
     ic(hdbscan_model.labels_)
     
     # Update database with predicted cluster labels and probabilities
-    cursor = conn.cursor()
-    for damage_id in damage_ids:
-        idx = damage_ids.index(damage_id)
-        if idx % 1000 == 0:
-            print(f"Processing damage_id: {damage_id} (index {idx})")
-        shape_class = int(hdbscan_model.labels_[idx])
-        soft_damage_class = int(soft_damage_classes[idx])
-        soft_damage_prob = float(soft_damage_probs[idx])
-        cursor.execute(f""" 
-            UPDATE damage
-            SET shape_class = {shape_class}, 
-                soft_damage_class = {soft_damage_class}, 
-                soft_damage_prob = {soft_damage_prob}  
-            WHERE damage_id = {damage_id}
-        """)
-    conn.commit()
-    conn.close()
+    
+    with open_db(db_path) as conn:
+        cursor = conn.cursor()
+        for damage_id in damage_ids:
+            idx = damage_ids.index(damage_id)
+            if idx % 1000 == 0:
+                print(f"Processing damage_id: {damage_id} (index {idx})")
+            shape_class = int(hdbscan_model.labels_[idx])
+            soft_damage_class = int(soft_damage_classes[idx])
+            soft_damage_prob = float(soft_damage_probs[idx])
+            cursor.execute(f""" 
+                UPDATE damage
+                SET shape_class = {shape_class}, 
+                    soft_damage_class = {soft_damage_class}, 
+                    soft_damage_prob = {soft_damage_prob}  
+                WHERE damage_id = {damage_id}
+            """)
     ic("Database updated with predicted cluster labels and probabilities.") 
     
 # db_path = '/home/aubrey/Desktop/Efate2025/Efate2025B.db'
@@ -583,8 +619,6 @@ def check_damage_table(db_path):
     ############################################
     
 def main(): 
-    
-    train_model(db_path='Efate2025B_4k.db', model_path='hdbscan_damage_pipeline.joblib')
     
     # If '--test' is passed in the terminal arguments, run doctest instead of CLI
     if "--test" in sys.argv:
