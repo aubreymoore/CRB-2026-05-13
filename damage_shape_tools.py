@@ -98,71 +98,71 @@ def run_damage_shape_classifier_pipeline(db_path, csv_path):
     """ 
     ic()
     create_cluster2class_table(db_path, csv_path)
-    create_db_views(db_path)
+    create_damage_view(db_path)
   
       
-# def create_damage_view(db_path: str):
-#     """ 
-#     Creates views named v_damage in the current db.
-#     v_damage contains the number of damage records associated with each damage in the v_damage view.
+def create_damage_view(db_path: str):
+    """ 
+    Creates views named v_damage in the current db.
+    v_damage contains the number of damage records associated with each damage in the v_damage view.
     
-#     Example:
-#         >>> db_path = '/home/aubrey/Desktop/crb-2026-05-13/test.db'
-#         >>> # check if the views exist
-#         >>> create_db_views(db_path)  
-#         >>> conn = sqlite3.connect(db_path)
-#         >>> cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='view';")
-#         >>> view_names = [row[0] for row in cursor.fetchall()]
-#         >>> print(view_names)
-#         >>> assert len(view_names) > 0
-#         >>> assert 'v_damage' in view_names
-#         >>> assert 'v_damage' in view_names
-#         >>> conn.close()
-#     """
-#     # connect to db and enable spatial extensions
-#     conn = sqlite3.connect(db_path)
-#     try:
-#         with conn:
-#             print(f"Creating views v_damage in database: {db_path}")
-#             conn.execute('DROP VIEW IF EXISTS v_damage;')
-#             conn.commit()
+    Example:
+        >>> db_path = '/home/aubrey/Desktop/crb-2026-05-13/test.db'
+        >>> # check if the views exist
+        >>> create_damage_view(db_path)  
+        >>> conn = sqlite3.connect(db_path)
+        >>> cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='view';")
+        >>> view_names = [row[0] for row in cursor.fetchall()]
+        >>> print(view_names)
+        >>> assert len(view_names) > 0
+        >>> assert 'v_damage' in view_names
+        >>> assert 'v_damage' in view_names
+        >>> conn.close()
+    """
+    # connect to db and enable spatial extensions
+    conn = sqlite3.connect(db_path)
+    try:
+        with conn:
+            print(f"Creating views v_damage in database: {db_path}")
+            conn.execute('DROP VIEW IF EXISTS v_damage;')
+            conn.commit()
             
-#             conn.execute(''' 
-#                 CREATE VIEW v_damage AS
-#                 SELECT 
-#                     damage_id, 
-#                     image_id, 
-#                     confidence, 
-#                     damage_poly, 
-#                     pixel_count, 
-#                     soft_damage_class, 
-#                     soft_damage_prob, 
-#                     damage_cluster, 
-#                     cluster2class.damage_class
-#                 FROM damage, cluster2class
-#                 WHERE damage.soft_damage_class = cluster2class.damage_cluster
-#                 ''')
-#             conn.commit
+            conn.execute(''' 
+                CREATE VIEW v_damage AS
+                SELECT 
+                    damage_id, 
+                    image_id, 
+                    confidence, 
+                    damage_poly, 
+                    pixel_count, 
+                    soft_damage_class, 
+                    soft_damage_prob, 
+                    damage_cluster, 
+                    cluster2class.damage_class
+                FROM damage, cluster2class
+                WHERE damage.soft_damage_class = cluster2class.damage_cluster
+                ''')
+            conn.commit
             
-#             conn.execute('DROP VIEW IF EXISTS v_damage;')
-#             conn.commit()
+            conn.execute('DROP VIEW IF EXISTS v_damage;')
+            conn.commit()
             
-#             conn.execute(''' 
-#                 CREATE VIEW v_damage AS
-#                 SELECT 
-#                     t.damage_id,  
-#                     t.damage_class,	
-#                     COUNT(d.damage_id) AS damage_count
-#                 FROM v_damage t
-#                 LEFT JOIN damage d ON t.damage_id = d.damage_id
-#                 GROUP BY t.damage_id;
-#                 ''')
-#             conn.commit()
+            conn.execute(''' 
+                CREATE VIEW v_damage AS
+                SELECT 
+                    t.damage_id,  
+                    t.damage_class,	
+                    COUNT(d.damage_id) AS damage_count
+                FROM v_damage t
+                LEFT JOIN damage d ON t.damage_id = d.damage_id
+                GROUP BY t.damage_id;
+                ''')
+            conn.commit()
             
-#     except sqlite3.Error as e:
-#         print(f"Transaction failed and was rolled back: {e}")
+    except sqlite3.Error as e:
+        print(f"Transaction failed and was rolled back: {e}")
          
-#     conn.close()
+    conn.close()
     
 # # Usage example:
 # create_db_views('test.db')

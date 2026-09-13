@@ -26,7 +26,7 @@ try:
         ST_MaxX(tree_poly) - ST_MinX(tree_poly) AS width, 
         ST_MaxY(tree_poly) - ST_MinY(tree_poly) AS height
     FROM trees 
-    WHERE tree_id = 1;
+    WHERE tree_id = 11;
     """
     cursor.execute(query)
     row = cursor.fetchone()
