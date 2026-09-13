@@ -27,6 +27,7 @@ import tomllib
 import sys
 import xdoctest
 import fire
+from contextlib import contextmanager
 
 ##############################################################################################
 # The first 3 functions are here to help me learn xdoctest and should be removed at some point
@@ -79,6 +80,43 @@ def cause_runtime_error():
 
 ##########################################################################################
 ##########################################################################################
+
+@contextmanager
+def open_db(db_path):
+    conn = sqlite3.connect(db_path)
+    try:
+        # 1. Configure Row Factory (built-in dictionary-like rows)
+        conn.row_factory = sqlite3.Row
+        
+        # 2. Load SpatiaLite Extension
+        conn.enable_load_extension(True)
+        conn.load_extension("mod_spatialite") 
+        
+        # Yield the fully configured connection
+        yield conn
+        
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+# Usage example:
+
+# db_path = 'new.db'
+# with open_db() as conn:
+#     cursor = conn.cursor()
+    
+#     # You can now use SpatiaLite functions right away
+#     cursor.execute("SELECT image_id FROM images WHERE damage_flag = 0")
+    
+#     # Because of sqlite3.Row, you can access columns by name!
+#     image_id_queue = [row['image_id'] for row in cursor.fetchall()]    
+    
+#     # Connection is automatically committed and closed here.
+    
+# ic(image_id_queue);       
 
 
 def run_train_damage_model_shape_pipeline(db_path, db_backup_dir, model_path, images_per_cluster, gallery_dir, min_prob):
@@ -279,7 +317,8 @@ def create_damage_cluster_gallery(db_path:str, images_per_cluster:int, gallery_d
 # min_prob = '0.2'              
 # create_damage_cluster_gallery(db_path, images_per_cluster, gallery_dir, min_prob)
  
- #########################################################################################                             
+ ######################################################################################### 
+                             
 def get_spatialite_contours(db_path, table_name, geom_column, additional_filters='', limit=100):
     """
     Fetches geometries from a SpatiaLite database and converts them into 
@@ -375,15 +414,42 @@ def train_model(db_path, model_path):
     
     Note that the cluster2class dictionary must be constructed by visual inspection of damage shape clusters.
     """
-    ic(db_path)
+    
+    
+    
+    ###################################################################################
+    # The following block was simplified by abandoning the use of get_spatial_contours
+    # for an explicitly defined query.
+      
     # Get damage contours and calculate invariant features (Hu moments)
-    contours, damage_ids = get_spatialite_contours(
-        db_path=db_path,
-        table_name='damage',
-        geom_column='damage_poly',
-        additional_filters='AND confidence>0.4 AND tree_touches_edge=0 AND pixel_count > 400',
-        limit=1000000   
-    )
+    
+    # contours, damage_ids = get_spatialite_contours(
+    #     db_path=db_path,
+    #     table_name='damage',
+    #     geom_column='damage_poly',
+    #     additional_filters='AND confidence>0.4 AND tree_touches_edge=0 AND pixel_count > 400',
+    #     limit=1000000   
+    # )
+    
+    ic('hi')
+    with open_db(db_path) as conn:
+        cursor = conn.cursor()
+        query = '''
+        SELECT damage_id, AsGeoJSON(damage_poly) AS geojson_data
+        FROM trees, damage
+        WHERE 
+            trees.tree_id = damage.tree_id
+            AND tree_touches_edge = 0
+            AND trees.pixel_count > 400
+        LIMIT 3 '''
+        cursor.execute(query)
+        results = cursor.fetchall()
+    print(results)
+        
+    
+    
+    ######################################################################################
+    
     features = np.array([extract_invariant_features(c) for c in contours])
     ic(features);
 
@@ -399,7 +465,7 @@ def train_model(db_path, model_path):
     joblib.dump(hdbscan_pipeline, model_path)
     
     # Usage example:
-    # train_model()
+    # train_model(db_path=Efate2025B_4k.db, model_path='hdbscan_damage_pipeline.joblib')
 
 ##############################################################################################
 
@@ -517,6 +583,9 @@ def check_damage_table(db_path):
     ############################################
     
 def main(): 
+    
+    train_model(db_path='Efate2025B_4k.db', model_path='hdbscan_damage_pipeline.joblib')
+    
     # If '--test' is passed in the terminal arguments, run doctest instead of CLI
     if "--test" in sys.argv:
         sys.argv.remove("--test")  # Clean up arguments for doctest
