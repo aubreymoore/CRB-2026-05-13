@@ -160,13 +160,14 @@ def run_train_damage_model_shape_pipeline(db_path, db_backup_dir, model_path, im
     create_damage_cluster_gallery(db_path, images_per_cluster, gallery_dir, min_prob)
 
 
-def run_damage_shape_classifier_pipeline(db_path, csv_path):
+def run_damage_shape_classifier_pipeline(db_path, csv_path, model_path):
     """  
     Converts cluster index to damage_shape index.
     """ 
     ic()
-    create_cluster2class_table(db_path, csv_path)
+    create_damage_cluster2class_table(db_path, csv_path)
     create_damage_view(db_path)
+    classify_damage_shapes(db_path, model_path)
   
       
 def create_damage_view(db_path: str):
@@ -250,7 +251,7 @@ backup_database(db_path)
 
 #############################################################################################
 
-def create_cluster2class_table(db_path: str, csv_path :str='damage_cluster2class.csv') -> None:
+def create_damage_cluster2class_table(db_path: str, csv_path :str='damage_cluster2class.csv') -> None:
     """  
     Imports a csv file into a new database table named 'cluster_class'
     The csv file should contain 2 columns: 'damage_cluster' (integer) and 'damage_class' (string)
@@ -541,7 +542,7 @@ def classify_damage_shapes(db_path:str, model_path:str):
             trees.tree_id = damage.tree_id
             AND tree_touches_edge = 0
             AND trees.pixel_count > 400
-        LIMIT 1000 ''' # training with 1000 damage polygons
+        '''
         cursor.execute(query)
         rows = cursor.fetchall()
         
