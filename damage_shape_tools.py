@@ -250,7 +250,7 @@ backup_database(db_path)
 
 #############################################################################################
 
-def create_cluster2class_table(db_path: str, csv_path :str='cluster2class.csv') -> None:
+def create_cluster2class_table(db_path: str, csv_path :str='damage_cluster2class.csv') -> None:
     """  
     Imports a csv file into a new database table named 'cluster_class'
     The csv file should contain 2 columns: 'damage_cluster' (integer) and 'damage_class' (string)
@@ -263,7 +263,7 @@ def create_cluster2class_table(db_path: str, csv_path :str='cluster2class.csv') 
     if not os.path.exists(csv_path):
         return 'ERROR: csv_path does not exist'
     df = pd.read_csv(csv_path)
-    df.to_sql(name='cluster2class', con=sqlite3.connect(db_path), if_exists="replace", index=False)
+    df.to_sql(name='damage_cluster2class', con=sqlite3.connect(db_path), if_exists="replace", index=False)
 
 ###############################################################################################
 
