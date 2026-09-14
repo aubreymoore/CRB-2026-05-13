@@ -1,4 +1,5 @@
 # Reference: https://www.youtube.com/watch?v=CUjCqOw_oFk
+
 # Use "pytest --xdoctest" to run doctests
 
 # Here is an example of using xdoctest to test a single function in this module:
@@ -117,6 +118,35 @@ def open_db(db_path):
 #     # Connection is automatically committed and closed here.
     
 # ic(image_id_queue);       
+
+
+def fit_contour_to_canvas(cnt, canvas_width, canvas_height, padding=20):
+    # Get bounding box of the contour
+    x, y, w, h = cv2.boundingRect(cnt)
+    
+    # Subtract padding from both sides of the canvas dimensions
+    target_w = canvas_width - (padding * 2)
+    target_h = canvas_height - (padding * 2)
+    
+    # Ensure target dimensions don't go below zero
+    target_w = max(1, target_w)
+    target_h = max(1, target_h)
+    
+    # Calculate scale factors using the padded dimensions
+    scale_x = target_w / w
+    scale_y = target_h / h
+    scale = min(scale_x, scale_y)
+    
+    # Find center of the original bounding box
+    center_x = x + w / 2
+    center_y = y + h / 2
+    
+    # Center the contour at origin, scale, and shift to canvas center
+    cnt_norm = cnt - np.array([center_x, center_y])
+    cnt_scaled = cnt_norm * scale
+    cnt_scaled = cnt_scaled + np.array([canvas_width / 2, canvas_height / 2])
+    
+    return cnt_scaled.astype(np.int32)
 
 
 def run_train_damage_model_shape_pipeline(db_path, db_backup_dir, model_path, images_per_cluster, gallery_dir, min_prob):
@@ -303,9 +333,12 @@ def create_damage_cluster_gallery(db_path:str, images_per_cluster:int, gallery_d
             cnt = contour.copy()
             M = cv2.moments(cnt)
             if M["m00"] != 0:
-                cx = int(M["m10"] / M["m00"])
-                cy = int(M["m01"] / M["m00"])
-                cnt = cnt - [cx, cy] + [540, 540] # shifts center to (540,540)
+                # cx = int(M["m10"] / M["m00"])
+                # cy = int(M["m01"] / M["m00"])
+                # cnt = cnt - [cx, cy] + [540, 540] # shifts center to (540,540)
+                
+                # fit contour to canvas
+                cnt = fit_contour_to_canvas(cnt, 1080, 1080)
                 
                 cv2.drawContours(canvas, [cnt], -1, 255, thickness=cv2.FILLED)
                 cv2.flip(canvas, 0, dst=canvas)  # Flip vertically for correct orientation
