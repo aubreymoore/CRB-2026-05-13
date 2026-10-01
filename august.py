@@ -10,21 +10,11 @@ import numpy as np
 from icecream import ic
 from roadside import run_sam3_semantic_predictor
 from amutils import dict_from_toml, setup_logging
-from tree_shape_tools import check_trees_table, run_tree_shape_classifier_pipeline, create_db_views, classify_tree_shapes
+from tree_shape_tools import run_tree_shape_classifier_pipeline, classify_tree_shapes
 from np2sqlite import array2blob, blob2array
 
 import pandas as pd
 
-##################
-
-def create_cluster2class_table(csv_path, db_path):
-    df = pd.read_csv(csv_path)
-    conn = sqlite3.connect(db_path)
-    df.to_sql("my_table", conn, if_exists="replace", index=False)
-    conn.close()
-
-
-##################
 
 def already_in_db(db_path: str, table_name: str, column_name: str, search_value) -> bool:
     """
@@ -196,30 +186,36 @@ conn = sqlite3.connect(db_path)
 conn.enable_load_extension(True)
 conn.load_extension('mod_spatialite')
 conn.execute("SELECT InitSpatialMetaData(1);")
-# log.debug(ic(configsql['default_schema_sql']))
+
+# PROBABLY WANT TO MOVE THIS
+log.info('creating cluster2class table')
+df = pd.read_csv(config['trees']['csv_path'])
+df.to_sql("cluster2class", conn, if_exists="replace", index=False)
+
 conn.executescript(configsql['default_schema_sql'])
 conn.commit()
 
-conn.executescript(configsql['create_v_tree_poly_view_sql'])
-conn.commit()
+# sys.exit()     
+##########
+
+# conn.executescript(configsql['create_v_tree_poly_view_sql'])
+# conn.commit()
 
 conn.executescript(configsql['create_v_camera_movement_sql'])
 conn.commit()
 
 
-# with open('default_schema.sql', 'r') as file:
-#     sql_script = file.read()
-# conn.executescript(sql_script)
-# conn.commit()
 
-log.info('creating cluster2class table')
-create_cluster2class_table(config['trees']['csv_path'], config['database']['db_path'])
 
-# Check db tables
-cursor = conn.cursor()
-cursor.execute("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%';")
-db_tables = cursor.fetchall()
-ic(db_tables)
+# log.info('creating cluster2class table')
+# df = pd.read_csv(config['trees']['csv_path'])
+# df.to_sql("cluster2class", conn, if_exists="replace", index=False)
+
+# # Check db tables
+# cursor = conn.cursor()
+# cursor.execute("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+# db_tables = cursor.fetchall()
+# ic(db_tables)
 
 log.info('detecting coconut palms in images')
 
@@ -247,11 +243,6 @@ for image_path in image_paths:
 log.info('### STEP 3: RUN POSTPROCESSING SQL')
 conn.executescript(configsql['postprocessing_sql'])
 conn.commit()
-
-# with open('postprocessing.sql', 'r') as file:
-#     sql_script = file.read()
-# conn.executescript(sql_script)
-# conn.commit() 
 
 sys.exit()
 ##########

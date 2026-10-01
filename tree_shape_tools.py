@@ -1,5 +1,5 @@
 # Reference: https://www.youtube.com/watch?v=CUjCqOw_oFk
-# Use "pytest --xdoctest" to run doctests
+# Use "pytest --xdoctest tree_shape_tools.py" to run doctests
 
 # Here is an example of using xdoctest to test a single function in this module:
 # xdoctest --verbose 2 tree_shape_tools.py create_db_views
@@ -101,69 +101,69 @@ def run_tree_shape_classifier_pipeline(db_path, csv_path):
     create_db_views(db_path)
   
       
-def create_db_views(db_path: str):
-    """ 
-    Creates views named v_trees and v_damage in the current db.
-    v_trees view includes columns from the trees table plus the tree_class field from the cluster2class table. 
-    v_damage contains the number of damage records associated with each tree in the v_trees view.
+# def create_db_views(db_path: str):
+#     """ 
+#     Creates views named v_trees and v_damage in the current db.
+#     v_trees view includes columns from the trees table plus the tree_class field from the cluster2class table. 
+#     v_damage contains the number of damage records associated with each tree in the v_trees view.
     
-    Example:
-        >>> db_path = '/home/aubrey/Desktop/crb-2026-05-13/test.db'
-        >>> # check if the views exist
-        >>> create_db_views(db_path)  
-        >>> conn = sqlite3.connect(db_path)
-        >>> cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='view';")
-        >>> view_names = [row[0] for row in cursor.fetchall()]
-        >>> print(view_names)
-        >>> assert len(view_names) > 0
-        >>> assert 'v_trees' in view_names
-        >>> assert 'v_damage' in view_names
-        >>> conn.close()
-    """
-    # connect to db and enable spatial extensions
-    conn = sqlite3.connect(db_path)
-    try:
-        with conn:
-            print(f"Creating views v_trees and v_damage in database: {db_path}")
-            conn.execute('DROP VIEW IF EXISTS v_trees;')
-            conn.commit()
+#     Example:
+#         >>> db_path = '/home/aubrey/Desktop/crb-2026-05-13/test.db'
+#         >>> # check if the views exist
+#         >>> create_db_views(db_path)  
+#         >>> conn = sqlite3.connect(db_path)
+#         >>> cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='view';")
+#         >>> view_names = [row[0] for row in cursor.fetchall()]
+#         >>> print(view_names)
+#         >>> assert len(view_names) > 0
+#         >>> assert 'v_trees' in view_names
+#         >>> assert 'v_damage' in view_names
+#         >>> conn.close()
+#     """
+#     # connect to db and enable spatial extensions
+#     conn = sqlite3.connect(db_path)
+#     try:
+#         with conn:
+#             print(f"Creating views v_trees and v_damage in database: {db_path}")
+#             conn.execute('DROP VIEW IF EXISTS v_trees;')
+#             conn.commit()
             
-            conn.execute(''' 
-                CREATE VIEW v_trees AS
-                SELECT 
-                    tree_id, 
-                    image_id, 
-                    confidence, 
-                    tree_poly, 
-                    pixel_count, 
-                    soft_tree_class, 
-                    soft_tree_prob, 
-                    tree_cluster, 
-                    cluster2class.tree_class
-                FROM trees, cluster2class
-                WHERE trees.soft_tree_class = cluster2class.tree_cluster
-                ''')
-            conn.commit
+#             conn.execute(''' 
+#                 CREATE VIEW v_trees AS
+#                 SELECT 
+#                     tree_id, 
+#                     image_id, 
+#                     confidence, 
+#                     tree_poly, 
+#                     pixel_count, 
+#                     soft_tree_class, 
+#                     soft_tree_prob, 
+#                     tree_cluster, 
+#                     cluster2class.tree_class
+#                 FROM trees, cluster2class
+#                 WHERE trees.soft_tree_class = cluster2class.tree_cluster
+#                 ''')
+#             conn.commit
             
-            conn.execute('DROP VIEW IF EXISTS v_damage;')
-            conn.commit()
+#             conn.execute('DROP VIEW IF EXISTS v_damage;')
+#             conn.commit()
             
-            conn.execute(''' 
-                CREATE VIEW v_damage AS
-                SELECT 
-                    t.tree_id,  
-                    t.tree_class,	
-                    COUNT(d.damage_id) AS damage_count
-                FROM v_trees t
-                LEFT JOIN damage d ON t.tree_id = d.tree_id
-                GROUP BY t.tree_id;
-                ''')
-            conn.commit()
+#             conn.execute(''' 
+#                 CREATE VIEW v_damage AS
+#                 SELECT 
+#                     t.tree_id,  
+#                     t.tree_class,	
+#                     COUNT(d.damage_id) AS damage_count
+#                 FROM v_trees t
+#                 LEFT JOIN damage d ON t.tree_id = d.tree_id
+#                 GROUP BY t.tree_id;
+#                 ''')
+#             conn.commit()
             
-    except sqlite3.Error as e:
-        print(f"Transaction failed and was rolled back: {e}")
+#     except sqlite3.Error as e:
+#         print(f"Transaction failed and was rolled back: {e}")
          
-    conn.close()
+#     conn.close()
     
 # # Usage example:
 # create_db_views('test.db')
@@ -183,20 +183,20 @@ backup_database(db_path)
 
 #############################################################################################
 
-def create_cluster2class_table(db_path: str, csv_path :str='cluster2class.csv') -> None:
-    """  
-    Imports a csv file into a new database table named 'cluster_class'
-    The csv file should contain 2 columns: 'tree_cluster' (integer) and 'tree_class' (string)
-    If csv_path does not exist, a FileNotFound error is raised with a message instructions 
-    on creation of cluster2class.csv.
+# def create_cluster2class_table(db_path: str, csv_path :str='cluster2class.csv') -> None:
+#     """  
+#     Imports a csv file into a new database table named 'cluster_class'
+#     The csv file should contain 2 columns: 'tree_cluster' (integer) and 'tree_class' (string)
+#     If csv_path does not exist, a FileNotFound error is raised with a message instructions 
+#     on creation of cluster2class.csv.
     
-    >>> create_cluster2class_table(db_path='/home/aubrey/Desktop/Efate2025/Efate2025B_copy.db', csv_path='missing.csv')
-    ERROR: csv_path does not exist
-    """
-    if not os.path.exists(csv_path):
-        return 'ERROR: csv_path does not exist'
-    df = pd.read_csv(csv_path)
-    df.to_sql(name='cluster2class', con=sqlite3.connect(db_path), if_exists="replace", index=False)
+#     >>> create_cluster2class_table(db_path='/home/aubrey/Desktop/Efate2025/Efate2025B_copy.db', csv_path='missing.csv')
+#     ERROR: csv_path does not exist
+#     """
+#     if not os.path.exists(csv_path):
+#         return 'ERROR: csv_path does not exist'
+#     df = pd.read_csv(csv_path)
+#     df.to_sql(name='cluster2class', con=sqlite3.connect(db_path), if_exists="replace", index=False)
 
 ###############################################################################################
 
@@ -483,35 +483,35 @@ def classify_tree_shapes(db_path:str, model_path:str):
      
 ##################################################################################
 
-def check_trees_table(db_path):
-    """ 
-    Ensures required fields exist in trees table.
-    Populates pixel_count field.
+# def check_trees_table(db_path):
+#     """ 
+#     Ensures required fields exist in trees table.
+#     Populates pixel_count field.
     
-    model is saved as hdbscan_pipeline_1.joblib
-    """    
-    conn = sqlite3.connect(db_path)
-    conn.enable_load_extension(True)
-    conn.load_extension('mod_spatialite')
+#     model is saved as hdbscan_pipeline_1.joblib
+#     """    
+#     conn = sqlite3.connect(db_path)
+#     conn.enable_load_extension(True)
+#     conn.load_extension('mod_spatialite')
     
-    # get field names from trees table
-    with conn:
-        cursor = conn.execute("PRAGMA table_info(trees)")
-        field_names = [row[1] for row in cursor.fetchall()]
-        ic(field_names)
+#     # get field names from trees table
+#     with conn:
+#         cursor = conn.execute("PRAGMA table_info(trees)")
+#         field_names = [row[1] for row in cursor.fetchall()]
+#         ic(field_names)
     
-    # ensure fields exist
-    with conn:
-        if 'pixel_count' not in field_names:     conn.execute('ALTER TABLE trees ADD COLUMN pixel_count DOUBLE')
-        if 'shape_class' not in field_names:     conn.execute('ALTER TABLE trees ADD COLUMN shape_class INTEGER')
-        if 'soft_tree_class' not in field_names: conn.execute('ALTER TABLE trees ADD COLUMN soft_tree_class INTEGER')
-        if 'soft_tree_prob' not in field_names:  conn.execute('ALTER TABLE trees ADD COLUMN soft_tree_prob REAL')
-        if 'tree_class' not in field_names:      conn.execute('ALTER TABLE trees ADD COLUMN tree_class TEXT')
+#     # ensure fields exist
+#     with conn:
+#         if 'pixel_count' not in field_names:     conn.execute('ALTER TABLE trees ADD COLUMN pixel_count DOUBLE')
+#         if 'shape_class' not in field_names:     conn.execute('ALTER TABLE trees ADD COLUMN shape_class INTEGER')
+#         if 'soft_tree_class' not in field_names: conn.execute('ALTER TABLE trees ADD COLUMN soft_tree_class INTEGER')
+#         if 'soft_tree_prob' not in field_names:  conn.execute('ALTER TABLE trees ADD COLUMN soft_tree_prob REAL')
+#         if 'tree_class' not in field_names:      conn.execute('ALTER TABLE trees ADD COLUMN tree_class TEXT')
            
-    # populate pixel_count field (= area of tree_poly in pixels)
-    with conn:
-        conn.execute('UPDATE trees SET pixel_count = ST_Area(tree_poly)')
-    conn.close()
+#     # populate pixel_count field (= area of tree_poly in pixels)
+#     with conn:
+#         conn.execute('UPDATE trees SET pixel_count = ST_Area(tree_poly)')
+#     conn.close()
     
     ############################################
     
@@ -525,13 +525,13 @@ def main():
         os.environ["PAGER"] = "cat" # disables output in full page format
         fire.Fire({
             'backup_database': backup_database,   
-            'check_trees': check_trees_table, 
+            # 'check_trees': check_trees_table, 
             'train_model': train_model, 
             'classify_tree_shapes': classify_tree_shapes,
             'create_tree_cluster_gallery': create_tree_cluster_gallery,
             'run_train_model_pipeline': run_train_model_pipeline,
             'run_tree_shape_classifier_pipeline': run_tree_shape_classifier_pipeline,
-            'create_db_views': create_db_views,
+            # 'create_db_views': create_db_views,
         })
 
     ################################################

@@ -3,5 +3,5 @@ UPDATE trees
 SET tree_class = (
   SELECT tree_class 
   FROM cluster2class
-  WHERE tree_cluster = soft_tree_class
+  WHERE trees.soft_tree_class = cluster2class.soft_tree_class
 )
