@@ -13,6 +13,17 @@ from amutils import dict_from_toml, setup_logging
 from tree_shape_tools import check_trees_table, run_tree_shape_classifier_pipeline, create_db_views, classify_tree_shapes
 from np2sqlite import array2blob, blob2array
 
+import pandas as pd
+
+##################
+
+def create_cluster2class_table(csv_path, db_path):
+    df = pd.read_csv(csv_path)
+    conn = sqlite3.connect(db_path)
+    df.to_sql("my_table", conn, if_exists="replace", index=False)
+    conn.close()
+
+
 ##################
 
 def already_in_db(db_path: str, table_name: str, column_name: str, search_value) -> bool:
@@ -186,23 +197,34 @@ conn.enable_load_extension(True)
 conn.load_extension('mod_spatialite')
 conn.execute("SELECT InitSpatialMetaData(1);")
 # log.debug(ic(configsql['default_schema_sql']))
-# conn.executescript(configsql['default_schema_sql'])
-# conn.commit()
-
-with open('default_schema.sql', 'r') as file:
-    sql_script = file.read()
-conn.executescript(sql_script)
+conn.executescript(configsql['default_schema_sql'])
 conn.commit()
 
-##########
+conn.executescript(configsql['create_v_tree_poly_view_sql'])
+conn.commit()
+
+conn.executescript(configsql['create_v_camera_movement_sql'])
+conn.commit()
+
+
+# with open('default_schema.sql', 'r') as file:
+#     sql_script = file.read()
+# conn.executescript(sql_script)
+# conn.commit()
+
+log.info('creating cluster2class table')
+create_cluster2class_table(config['trees']['csv_path'], config['database']['db_path'])
+
+# Check db tables
+cursor = conn.cursor()
+cursor.execute("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+db_tables = cursor.fetchall()
+ic(db_tables)
 
 log.info('detecting coconut palms in images')
 
-log.info('### STEP 1: GET INPUT IMAGES')
-image_paths = [
-    'does_not_exist.jpg',
-    '/home/aubrey/Desktop/crbdd/resources/example_images/08hs-palms-03-zglw-superJumbo.webp',
-    '/home/aubrey/Desktop/crbdd/resources/example_images/20251129_152106.jpg']     
+log.info('### STEP 1: GET INPUT IMAGE LIST')
+image_paths = config['images']['image_paths']
 text_prompts = ["coconut palm tree"]
 
 log.info('### STEP 2: RUN SAM3 SEMANTIC PREDICTOR ON IMAGES AND ADD RESULTS TO DATABASE')
@@ -214,18 +236,24 @@ for image_path in image_paths:
         log.info(f'{image_path} not found; continuing')
         continue
     results_cpu = run_sam3_semantic_predictor(image_path, text_prompts)
+    
+    ic(conn)
     add_image_to_db(conn, image_path, results_cpu)
     add_trees_to_db(conn, image_path, results_cpu)
-      
+    
+# sys.exit()     
 ##########
 
 log.info('### STEP 3: RUN POSTPROCESSING SQL')
-with open('postprocessing.sql', 'r') as file:
-    sql_script = file.read()
-conn.executescript(sql_script)
-conn.commit() 
+conn.executescript(configsql['postprocessing_sql'])
+conn.commit()
 
-# sys.exit()
+# with open('postprocessing.sql', 'r') as file:
+#     sql_script = file.read()
+# conn.executescript(sql_script)
+# conn.commit() 
+
+sys.exit()
 ##########
 
 log.info('### STEP 4: CHECK TREES TABLE')
