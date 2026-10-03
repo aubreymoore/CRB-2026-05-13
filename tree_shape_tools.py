@@ -408,6 +408,13 @@ def classify_tree_shapes(db_path:str, model_path:str):
     This function uses a trained HDBSCAN model to assign a values in the trees.tree_poly field into clusters.
     The shape is then assigned to a class using the cluster2class dictionary.
     This function updates the shape_class, soft_tree_class, and soft_tree_prob fields in the trees table. 
+    
+    Example:
+    
+    >>> db_path = 'test.db'
+    >>> model_path = 'hdbscan_pipeline_1.joblib'
+    >>> classify_tree_shapes(db_path, model_path)
+    
     """
     ic(db_path, model_path)
     
@@ -423,6 +430,11 @@ def classify_tree_shapes(db_path:str, model_path:str):
         additional_filters='AND confidence>0.4 AND tree_touches_edge=0 AND pixel_count > 400',
         limit=1000000   
     )
+    if len(tree_ids) == 0:
+        ic("No trees found matching the criteria. Exiting classification.")
+        conn.close()
+        return
+    
     ic(type(tree_ids), ic(len(tree_ids)));
     features = np.array([extract_invariant_features(c) for c in contours])
     ic(features);
