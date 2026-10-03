@@ -79,7 +79,7 @@ SELECT
     confidence, 
     tree_poly, 
     pixel_count, 
-    soft_tree_class, 
+    trees.soft_tree_class, 
     soft_tree_prob, 
     tree_cluster, 
     cluster2class.tree_class

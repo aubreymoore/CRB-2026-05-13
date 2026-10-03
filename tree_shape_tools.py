@@ -407,6 +407,7 @@ def classify_tree_shapes(db_path:str, model_path:str):
     """  
     This function uses a trained HDBSCAN model to assign a values in the trees.tree_poly field into clusters.
     The shape is then assigned to a class using the cluster2class dictionary.
+    This function updates the shape_class, soft_tree_class, and soft_tree_prob fields in the trees table. 
     """
     ic(db_path, model_path)
     

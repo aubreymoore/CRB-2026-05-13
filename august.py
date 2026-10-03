@@ -244,18 +244,16 @@ log.info('### STEP 3: RUN POSTPROCESSING SQL')
 conn.executescript(configsql['postprocessing_sql'])
 conn.commit()
 
-sys.exit()
+# sys.exit()
 ##########
 
-log.info('### STEP 4: CHECK TREES TABLE')
-check_trees_table(db_path) 
+log.info('### STEP 4: CLASSIFY TREE SHAPES')
 
-# REFACTOR
 # classify tree shapes using this filter:     additional_filters='AND confidence>0.4 AND tree_touches_edge=0 AND pixel_count > 400'
 classify_tree_shapes(db_path, model_path=config['trees']['model_path'])
 
-log.info('running tree shape classifier pipeline')
-run_tree_shape_classifier_pipeline(db_path, csv_path=config['trees']['csv_path'])
+# log.info('running tree shape classifier pipeline')
+# run_tree_shape_classifier_pipeline(db_path, csv_path=config['trees']['csv_path'])
 
 # log.info('update trees.tree_class based on clustering results')
 with open('tree_class_lookup.sql', 'r') as file:
