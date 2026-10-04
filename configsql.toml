@@ -25,6 +25,7 @@ SELECT AddGeometryColumn(
 
 SELECT CreateSpatialIndex('images', 'location');
 
+
 -- trees table
 
 CREATE TABLE IF NOT EXISTS trees (
@@ -33,23 +34,19 @@ CREATE TABLE IF NOT EXISTS trees (
     class_id INTEGER,
     confidence REAL,
     tree_touches_edge INTEGER DEFAULT 0,
-    pixel_count DOUBLE,
     shape_class INTEGER,
     soft_tree_class INTEGER,
-    tree_prob REAL,
+    soft_tree_prob REAL,
     tree_class TEXT,
+    tree_poly POLYGON,
+    pixel_count REAL GENERATED ALWAYS AS (ST_Area(tree_poly)) VIRTUAL,
     FOREIGN KEY (image_id) REFERENCES images (image_id) ON DELETE CASCADE 
 );
 
-SELECT AddGeometryColumn(
-    'trees',             -- Table name
-    'tree_poly',              -- Column name
-    0,                   -- SRID (-1 or 0 signifies flat pixel/Cartesian space)
-    'POLYGON',           -- Geometry type
-    'XY'                 -- 2D coordinates
-);
+SELECT RecoverGeometryColumn('trees', 'tree_poly', 0, 'POLYGON', 'XY');
 
 SELECT CreateSpatialIndex('trees', 'tree_poly');
+
 
 -- damage table
 
@@ -69,6 +66,7 @@ CREATE TABLE IF NOT EXISTS damage (
 );
 
 SELECT CreateSpatialIndex('damage', 'damage_poly');
+
 
 -- v_trees -requires cluster2class table
 
@@ -91,6 +89,7 @@ WHERE trees.soft_tree_class = cluster2class.tree_cluster
 #############################
 
 postprocessing_sql = '''
+
 -- flip ys in tree contours so they overlay images
 
 UPDATE trees 
@@ -101,19 +100,22 @@ SET tree_poly = ATM_Transform(tree_poly, ATM_CreateScale(1, -1));
 UPDATE damage 
 SET damage_poly = ATM_Transform(damage_poly, ATM_CreateScale(1, -1));
 
-/**********************************************************************************
-Calculates proximity of each tree polygon to the left, right an top edge the image.
-Proximity is expressed as a proportion of image width or image height.
+'''
 
-trees.tree_touches_edge is set to 1 if proximity is less that a specified threshold
-or 0 otherwise.
+# /**********************************************************************************
+# Calculates proximity of each tree polygon to the left, right an top edge the image.
+# Proximity is expressed as a proportion of image width or image height.
 
-It is assumed tree.poly is scaled with x ranging from 0 to page_width with 0 at the
-left of the image and y ranging from 0 to -page_height with 0 at the top of the 
-image.
-*/
+# trees.tree_touches_edge is set to 1 if proximity is less that a specified threshold
+# or 0 otherwise.
 
-CREATE TEMP TABLE temp_touches AS 
+# It is assumed tree.poly is scaled with x ranging from 0 to page_width with 0 at the
+# left of the image and y ranging from 0 to -page_height with 0 at the top of the 
+# image.
+# */
+
+tree_edge_proximity_sql = '''
+CREATE TEMP TABLE IF NOT EXISTS temp_touches AS 
 SELECT 
   trees.image_id, 
   tree_id,
@@ -121,14 +123,16 @@ SELECT
   1 - MbrMaxX(tree_poly)/image_width AS right_proximity,
   - MbrMaxY(tree_poly)/image_height AS top_proximity
 FROM trees, images
-WHERE trees.image_id=images.image_id;
+WHERE trees.image_id=images.image_id
+  AND images.image_id = {image_id};
 
 UPDATE trees
 SET tree_touches_edge = left_proximity<0.01 OR right_proximity<0.01 OR top_proximity<0.01
 FROM temp_touches
-WHERE trees.tree_id = temp_touches.tree_id;
+WHERE trees.tree_id = temp_touches.tree_id
+  AND trees.image_id = {image_id};
+''' 
 
-'''
 
 ##################################################################
 

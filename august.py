@@ -232,17 +232,30 @@ for image_path in image_paths:
         log.info(f'{image_path} not found; continuing')
         continue
     results_cpu = run_sam3_semantic_predictor(image_path, text_prompts)
-    
-    ic(conn)
     add_image_to_db(conn, image_path, results_cpu)
     add_trees_to_db(conn, image_path, results_cpu)
     
+    ## Postprocessing steps for current image
+    
+    # get image_id
+    cursor = conn.cursor()
+    cursor.execute(f'SELECT image_id from images where image_path = "{image_path}"')
+    image_id = cursor.fetchone()[0]
+    ic(image_id)
+    
+    # flip ys in tree contours so they overlay images
+    conn.execute(f'UPDATE trees SET tree_poly = ATM_Transform(tree_poly, ATM_CreateScale(1, -1)) WHERE image_id = {image_id}')
+    
+    template = configsql['tree_edge_proximity_sql']
+    sql = template.format(image_id=image_id)
+    conn.executescript(sql)
+
 # sys.exit()     
 ##########
 
-log.info('### STEP 3: RUN POSTPROCESSING SQL')
-conn.executescript(configsql['postprocessing_sql'])
-conn.commit()
+# log.info('### STEP 3: RUN POSTPROCESSING SQL')
+# conn.executescript(configsql['postprocessing_sql'])
+# conn.commit()
 
 # sys.exit()
 ##########

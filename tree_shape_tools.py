@@ -313,6 +313,7 @@ def get_spatialite_contours(db_path, table_name, geom_column, additional_filters
         {additional_filters}
         LIMIT {limit};
     """
+    ic(query)
     
     try:
         cursor.execute(query)
