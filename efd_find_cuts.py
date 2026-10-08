@@ -45,8 +45,8 @@ def efd_find_cuts(original_contour, original_mask, order=40, ksize=(3,3), iterat
     In the final step, noise is removed using a morphological operation called opening". 
     
     Required arguments:
-        original_contour    binary mask of a coconut palm
-        original_mask       a binary mask (filled original_contour)
+        original_contour    binary mask of a coconut palm; nparray of shape (N, 2) containing the pixel coordinates of the contour; dtype=int32
+        original_mask       a binary mask (filled original_contour); nparray of shape (H, W) containing 0s and 255s (or 0s and 1s); dtype=uint8
         
     Arguments with defaults:
         order               an EFD parameter which determines the size of the descriptor 
@@ -142,13 +142,16 @@ def plot_efd_results(efd_results):
 if __name__ == "__main__":
     random.seed(42)
     original_contour, original_mask = generate_palm_with_cuts(1)
+    ic(original_contour)
+    ic(original_mask)
+    
     results = efd_find_cuts(original_contour=original_contour, original_mask=original_mask)
     ic(results.n_vcuts_detected)
     ic(np.max(results.original_mask))
     ic(np.max(results.reconstructed_mask))
     ic(np.max(results.diff_mask))
     ic(np.max(results.clean_mask))
-    ic(results)
+    # ic(results)
     
     my_fig, my_axs = plot_efd_results(results)
     plt.show()
