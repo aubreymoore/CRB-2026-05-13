@@ -48,7 +48,7 @@ SELECT RecoverGeometryColumn('trees', 'tree_poly', 0, 'POLYGON', 'XY');
 SELECT CreateSpatialIndex('trees', 'tree_poly');
 
 
--- damage table
+-- cuts table
 
 CREATE TABLE IF NOT EXISTS cuts (
     cut_id INTEGER PRIMARY KEY, 
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS cuts (
     FOREIGN KEY (tree_id) REFERENCES trees(tree_id) ON DELETE CASCADE
 );
 
-    SELECT AddGeometryColumn(
+SELECT AddGeometryColumn(
     'cuts',            -- Table name
     'cut_poly',        -- Column name
     0,                 -- SRID (-1 or 0 signifies flat pixel/Cartesian space)
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS cuts (
     'XY'               -- 2D coordinates
 );
 
-SELECT CreateSpatialIndex('cutsge', 'damage_poly');
+SELECT CreateSpatialIndex('cuts', 'cut_poly');
 
 
 -- v_trees -requires cluster2class table
@@ -87,20 +87,6 @@ WHERE trees.soft_tree_class = cluster2class.tree_cluster
 '''
 
 #############################
-
-# postprocessing_sql = '''
-
-# -- flip ys in tree contours so they overlay images
-
-# UPDATE trees 
-# SET tree_poly = ATM_Transform(tree_poly, ATM_CreateScale(1, -1));
-
-# -- flip ys in damage contours so they overlay images
-
-# UPDATE damage 
-# SET damage_poly = ATM_Transform(damage_poly, ATM_CreateScale(1, -1));
-
-# '''
 
 # /**********************************************************************************
 # Calculates proximity of each tree polygon to the left, right an top edge the image.

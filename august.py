@@ -187,11 +187,15 @@ conn.enable_load_extension(True)
 conn.load_extension('mod_spatialite')
 conn.execute("SELECT InitSpatialMetaData(1);")
 
-# PROBABLY WANT TO MOVE THIS
 log.info('creating cluster2class table')
 df = pd.read_csv(config['trees']['csv_path'])
 df.to_sql("cluster2class", conn, if_exists="replace", index=False)
 
+log.info('creating damage_cluster2class table')
+df = pd.read_csv(config['damage']['csv_path'])
+df.to_sql("damage_cluster2class", conn, if_exists="replace", index=False)
+
+log.info('running default_schema.sql')
 conn.executescript(configsql['default_schema_sql'])
 conn.commit()
 
@@ -273,6 +277,14 @@ with open('tree_class_lookup.sql', 'r') as file:
     sql_script = file.read()
 conn.executescript(sql_script)
 conn.commit() 
+
+log.info('### STEP 5: Calculate damage shapes')
+
+
+
+
+log.info('### STEP 6: Classify damage shapes')
+
 
 sys.exit()
 ####################################################################
