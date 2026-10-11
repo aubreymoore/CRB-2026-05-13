@@ -1,0 +1,39 @@
+<h1>svg_example.html</h1>
+
+<p>This HTML example shows how to download an image and annotate it using an SVG overlay.
+File size is only 962 bytes.</p>
+
+<style>
+  .image-container {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    width: 1366px; /* Caps the maximum width to the true image size */
+  }
+
+  .base-image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .overlay-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+</style>
+
+<div class="image-container">
+  <!-- Base Image -->
+  <img  class="base-image" src="/home/aubrey/Desktop/crb-2026-05-13/data_cache/example_images/08hs-palms-03-zglw-superJumbo.webp" alt="Base Image" />
+
+  <!-- Overlay SVG matching the image dimensions -->
+  <svg class="overlay-svg" viewBox="0 0 1366 2048" xmlns="http://w3.org">
+    <circle cx="683" cy="1024" r="200" fill="rgba(255, 0, 0, 0.5)" />
+  </svg>
+</div>
+
