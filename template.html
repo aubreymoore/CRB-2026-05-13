@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Report</title>
+    <style>
+        .image-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            width: {{ image_width }}px; /* Caps the maximum width to the true image size */
+        }
+        .base-image {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .overlay-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>image_path: {{ image_path }}</h1>
+    <div class="image-container">
+        <img class="base-image" src="{{ image_path }}" alt="Base Image" />
+        <svg class="overlay-svg" viewBox="0 0 {{ image_width }} {{ image_height }}" xmlns="http://w3.org">
+            <g opacity="0.25">
+            {% for tree_svg_path in tree_svg_paths %}
+                <path d="{{ tree_svg_path }}" fill="rgba(0, 255, 0)" />,
+            {% endfor %}
+            </g>
+            <g opacity="0.5">
+                {% for cut_svg_path in cut_svg_paths %}
+                    <path d="{{ cut_svg_path }}" fill="rgba(255, 0, 0)" />,
+                {% endfor %}
+            </g>
+        </svg>
+    </div>
+</body>
+</html>
